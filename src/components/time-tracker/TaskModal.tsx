@@ -134,8 +134,8 @@ export default function TaskModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px]">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[480px] max-h-[90vh] flex flex-col">
+        <DialogHeader className="shrink-0">
           <DialogTitle>{isEditing ? "Edit Task" : "Track Time"}</DialogTitle>
           <DialogDescription>
             {isEditing
@@ -144,7 +144,7 @@ export default function TaskModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-2">
+        <div className="space-y-4 py-2 overflow-y-auto flex-1 min-h-0">
           {/* Task Name */}
           <div className="space-y-2">
             <Label htmlFor="task-name">
@@ -297,7 +297,7 @@ export default function TaskModal({
           </div>
         </div>
 
-        <DialogFooter className="gap-2 sm:gap-0">
+        <DialogFooter className="gap-2 sm:gap-0 shrink-0 pt-2 border-t">
           <Button variant="outline" onClick={handleCancel}>
             Cancel
           </Button>
