@@ -10,6 +10,10 @@ const nextConfig: NextConfig = {
   basePath: process.env.GITHUB_PAGES ? "/time-tracker" : "",
   // Trailing slash required for GitHub Pages static hosting
   trailingSlash: true,
+  // Allow sandbox preview origins
+  allowedDevOrigins: [
+    "space-z.ai",
+  ],
 };
 
 export default nextConfig;
