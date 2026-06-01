@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { signIn } from "next-auth/react";
+import { signIn, getSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +12,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Timer, AlertCircle, Loader2 } from "lucide-react";
 
 export default function AuthForm() {
+  const router = useRouter();
   const [mode, setMode] = useState<"login" | "register">("login");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -40,9 +42,17 @@ export default function AuthForm() {
       if (result?.error) {
         setError("Invalid email or password");
         setLoading(false);
+        return;
+      }
+
+      // Verify the session was established
+      const session = await getSession();
+      if (session) {
+        // Force a full page reload to ensure all components pick up the new session
+        window.location.reload();
       } else {
-        // Force a full page reload so useSession picks up the new session
-        window.location.href = "/";
+        setError("Login failed — session could not be established");
+        setLoading(false);
       }
     } catch {
       setError("An unexpected error occurred");
@@ -81,6 +91,7 @@ export default function AuthForm() {
 
       if (!res.ok) {
         setError(data.error || "Registration failed");
+        setLoading(false);
         return;
       }
 
@@ -95,13 +106,20 @@ export default function AuthForm() {
         setError("Account created! Please sign in manually.");
         setMode("login");
         setLoading(false);
+        return;
+      }
+
+      // Verify the session was established
+      const session = await getSession();
+      if (session) {
+        window.location.reload();
       } else {
-        // Force a full page reload so useSession picks up the new session
-        window.location.href = "/";
+        setError("Account created! Please sign in manually.");
+        setMode("login");
+        setLoading(false);
       }
     } catch {
       setError("An unexpected error occurred");
-    } finally {
       setLoading(false);
     }
   };
