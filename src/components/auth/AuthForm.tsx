@@ -38,11 +38,14 @@ export default function AuthForm() {
       });
 
       if (result?.error) {
-        setError(result.error);
+        setError("Invalid email or password");
+        setLoading(false);
+      } else {
+        // Force a full page reload so useSession picks up the new session
+        window.location.href = "/";
       }
     } catch {
       setError("An unexpected error occurred");
-    } finally {
       setLoading(false);
     }
   };
@@ -89,8 +92,12 @@ export default function AuthForm() {
       });
 
       if (result?.error) {
-        setError("Account created! Please log in manually.");
+        setError("Account created! Please sign in manually.");
         setMode("login");
+        setLoading(false);
+      } else {
+        // Force a full page reload so useSession picks up the new session
+        window.location.href = "/";
       }
     } catch {
       setError("An unexpected error occurred");
