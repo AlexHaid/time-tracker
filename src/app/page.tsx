@@ -221,6 +221,7 @@ export default function TimeTrackerPage() {
               onDateSelect={handleDateSelect}
               onAddTask={handleAddTask}
               entriesByDate={entriesByDate}
+              mounted={mounted}
             />
           </div>
 

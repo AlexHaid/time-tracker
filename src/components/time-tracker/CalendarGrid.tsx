@@ -27,6 +27,7 @@ interface CalendarGridProps {
   onDateSelect: (date: string) => void;
   onAddTask: (date: string) => void;
   entriesByDate: EntriesByDate;
+  mounted: boolean;
 }
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -48,6 +49,7 @@ export default function CalendarGrid({
   onDateSelect,
   onAddTask,
   entriesByDate,
+  mounted,
 }: CalendarGridProps) {
   // Generate the calendar days (6 weeks to fill grid)
   const calendarDays = useMemo(() => {
@@ -126,7 +128,7 @@ export default function CalendarGrid({
                 dateStr={dateStr}
                 inMonth={inMonth}
                 isSelected={isSelected}
-                isToday={today}
+                isToday={mounted && today}
                 totalMinutes={totalMinutes}
                 dayEntries={dayEntries}
                 onSelect={() => onDateSelect(dateStr)}
