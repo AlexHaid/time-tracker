@@ -2,20 +2,15 @@
 
 import React from "react";
 import { format, parseISO } from "date-fns";
-import { Pencil, Trash2, Clock, FileText } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Clock, FileText } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
 import { formatMinutes } from "@/lib/time-tracker/time-parser";
-import { WORK_TYPE_COLORS } from "@/lib/time-tracker/types";
-import type { TimeEntry, WorkType } from "@/lib/time-tracker/types";
+import type { TimeEntryWithDate } from "@/lib/time-tracker/types";
+import TaskItem from "./TaskItem";
 import styles from "./TaskPanel.module.css";
-
-/** TimeEntry augmented with date context (date comes from the key in EntriesByDate) */
-export type TimeEntryWithDate = TimeEntry & { date: string };
 
 interface TaskPanelProps {
   selectedDate: string | null;
@@ -99,70 +94,5 @@ export default function TaskPanel({
         )}
       </CardContent>
     </Card>
-  );
-}
-
-interface TaskItemProps {
-  entry: TimeEntryWithDate;
-  onEdit: () => void;
-  onDelete: () => void;
-}
-
-function TaskItem({ entry, onEdit, onDelete }: TaskItemProps) {
-  const typeInfo = WORK_TYPE_COLORS[entry.type || "development"];
-
-  return (
-    <div className={styles.taskItem}>
-      <div className={styles.taskContent}>
-        <div className={styles.taskNameRow}>
-          <div
-            className={styles.typeDot}
-            style={{ backgroundColor: typeInfo.dotColor }}
-          />
-          <h4 className={styles.taskName}>{entry.name}</h4>
-          <span
-            className={styles.typeBadge}
-            style={{
-              backgroundColor: typeInfo.badgeBg,
-              color: typeInfo.badgeText,
-              borderColor: typeInfo.badgeBorder,
-            }}
-          >
-            {typeInfo.label}
-          </span>
-        </div>
-        {entry.description && (
-          <p className={styles.taskDescription}>
-            {entry.description}
-          </p>
-        )}
-        <div className={styles.taskTimeRow}>
-          <Clock style={{ height: "0.75rem", width: "0.75rem", color: "var(--muted-foreground)" }} />
-          <span className={styles.taskTimeText} style={{ color: typeInfo.text }}>
-            {formatMinutes(entry.spentMinutes)}
-          </span>
-        </div>
-      </div>
-      <div className={styles.taskActions}>
-        <Button
-          variant="ghost"
-          size="icon"
-          className={styles.actionBtn}
-          onClick={onEdit}
-          aria-label={`Edit task ${entry.name}`}
-        >
-          <Pencil style={{ height: "0.875rem", width: "0.875rem" }} />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className={styles.deleteBtn}
-          onClick={onDelete}
-          aria-label={`Delete task ${entry.name}`}
-        >
-          <Trash2 style={{ height: "0.875rem", width: "0.875rem" }} />
-        </Button>
-      </div>
-    </div>
   );
 }

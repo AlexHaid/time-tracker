@@ -1,0 +1,28 @@
+.footer {
+  border-top: 1px solid var(--border);
+  background-color: var(--card);
+  margin-top: auto;
+}
+
+.footerInner {
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+  min-width: 0;
+}
+
+@media (min-width: 640px) {
+  .footerInner {
+    padding: 0.75rem 1.5rem;
+  }
+}
+
+.footerTotal {
+  font-weight: 700;
+  color: var(--foreground);
+}

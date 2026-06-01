@@ -60,6 +60,9 @@ export interface TaskFormData {
   includeNonWorkingDays: boolean;
 }
 
+/** TimeEntry augmented with date context (date comes from the key in EntriesByDate) */
+export type TimeEntryWithDate = TimeEntry & { date: string };
+
 export interface StorageData {
   entries: EntriesByDate;
   version: number;

@@ -114,3 +114,15 @@ export function formatMinutesShort(minutes: number): string {
   if (m === 0) return `${h}h`;
   return `${h}h${m}m`;
 }
+
+/**
+ * Format minutes for total display (e.g. header/footer totals).
+ * Same logic as formatMinutes but with a space: "1h 30m"
+ */
+export function formatTotal(mins: number): string {
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  if (h === 0) return `${m}m`;
+  if (m === 0) return `${h}h`;
+  return `${h}h ${m}m`;
+}
