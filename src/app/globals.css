@@ -66,20 +66,27 @@
   --chart-5: oklch(0.645 0.246 16.439);
 }
 
-/* Base resets */
+/* Base resets (replaces Tailwind Preflight) */
 *,
 *::before,
 *::after {
   box-sizing: border-box;
   border-color: var(--border);
   outline-color: color-mix(in oklch, var(--ring) 50%, transparent);
+  margin: 0;
+  padding: 0;
 }
 
 html {
   overflow-x: hidden;
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+  -moz-tab-size: 4;
+  tab-size: 4;
 }
 
 body {
+  margin: 0;
   background-color: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
@@ -87,11 +94,47 @@ body {
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
   min-width: 0;
+  line-height: 1.5;
+}
+
+/* Reset heading defaults */
+h1, h2, h3, h4, h5, h6 {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+/* Reset paragraph defaults */
+p {
+  margin: 0;
+}
+
+/* Reset list defaults */
+ol, ul, menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* Reset heading margins */
+h1, h2, h3, h4, h5, h6, p, blockquote, pre, figure, hr, dl, dd {
+  margin: 0;
 }
 
 button,
 [role="button"] {
   cursor: pointer;
+}
+
+/* Reset fieldset */
+fieldset {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+/* Reset textarea */
+textarea {
+  resize: vertical;
 }
 
 /* Screen-reader only utility */
