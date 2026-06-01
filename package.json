@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3000 2>&1 | tee dev.log",
-    "build": "next build",
+    "build": "next build && touch out/.nojekyll",
+    "build:gh": "GITHUB_PAGES=true next build && touch out/.nojekyll",
     "lint": "eslint ."
   },
   "dependencies": {
