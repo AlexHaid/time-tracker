@@ -41,7 +41,7 @@
 }
 
 .cardHeader {
-  padding-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
 }
 
 .headerRow {
@@ -99,7 +99,7 @@
 
 /* Task items list */
 .taskList {
-  padding: 0.75rem;
+  padding: 0.5rem;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;

@@ -51,7 +51,7 @@ export default function TaskPanel({
   const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
 
   return (
-    <Card className={styles.card}>
+    <Card className={styles.card} style={{ gap: 0, padding: "0.75rem 0" }}>
       <CardHeader className={styles.cardHeader}>
         <div className={styles.headerRow}>
           <CardTitle className={styles.cardTitle}>{formattedDate}</CardTitle>
