@@ -40,12 +40,12 @@ export default function AuthForm() {
       if (result?.error) {
         setError("Invalid email or password");
         setLoading(false);
-        return;
+      } else {
+        // signIn succeeded — session cookie is now set in the browser.
+        // Reload the current page so useSession picks up the new session.
+        // Using replace to avoid the user pressing back and seeing the login form.
+        window.location.replace(window.location.pathname);
       }
-
-      // Sign-in succeeded — the session cookie is now set.
-      // Navigate using the current origin (proxy URL), not localhost:3000.
-      window.location.href = window.location.origin + "/";
     } catch {
       setError("An unexpected error occurred");
       setLoading(false);
@@ -98,11 +98,9 @@ export default function AuthForm() {
         setError("Account created! Please sign in manually.");
         setMode("login");
         setLoading(false);
-        return;
+      } else {
+        window.location.replace(window.location.pathname);
       }
-
-      // Navigate using the current origin (proxy URL)
-      window.location.href = window.location.origin + "/";
     } catch {
       setError("An unexpected error occurred");
       setLoading(false);
