@@ -1,30 +1,93 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Timer, AlertCircle, Loader2 } from "lucide-react";
+import { Timer, AlertCircle, Loader2, Lock, KeyRound } from "lucide-react";
+
+type AuthMode = "loading" | "setup" | "unlock";
 
 export default function AuthForm() {
-  const [mode, setMode] = useState<"login" | "register">("login");
+  const [mode, setMode] = useState<AuthMode>("loading");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Login fields
-  const [loginEmail, setLoginEmail] = useState("");
-  const [loginPassword, setLoginPassword] = useState("");
+  // Setup fields
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
-  // Register fields
-  const [regName, setRegName] = useState("");
-  const [regEmail, setRegEmail] = useState("");
-  const [regPassword, setRegPassword] = useState("");
-  const [regConfirmPassword, setRegConfirmPassword] = useState("");
+  // Unlock field
+  const [unlockPassword, setUnlockPassword] = useState("");
 
-  const handleLogin = async (e: React.FormEvent) => {
+  // Check if app needs setup on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/auth/status");
+        const data = await res.json();
+        setMode(data.isSetup ? "unlock" : "setup");
+      } catch {
+        setMode("unlock"); // fallback
+      }
+    })();
+  }, []);
+
+  const handleSetup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    if (newPassword.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/auth/setup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: newPassword }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Setup failed");
+        setLoading(false);
+        return;
+      }
+
+      // Setup done — now auto-login
+      const loginRes = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: newPassword }),
+      });
+
+      if (!loginRes.ok) {
+        setError("Password set! Please unlock the app.");
+        setMode("unlock");
+        setLoading(false);
+        return;
+      }
+
+      window.location.reload();
+    } catch {
+      setError("An unexpected error occurred");
+      setLoading(false);
+    }
+  };
+
+  const handleUnlock = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
@@ -33,19 +96,17 @@ export default function AuthForm() {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: loginEmail, password: loginPassword }),
+        body: JSON.stringify({ password: unlockPassword }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Login failed");
+        setError(data.error || "Wrong password");
         setLoading(false);
         return;
       }
 
-      // Login succeeded — session cookie has been set by the server.
-      // Do a full page reload so useSession picks up the new session.
       window.location.reload();
     } catch {
       setError("An unexpected error occurred");
@@ -53,69 +114,21 @@ export default function AuthForm() {
     }
   };
 
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-
-    if (regPassword !== regConfirmPassword) {
-      setError("Passwords do not match");
-      return;
-    }
-
-    if (regPassword.length < 6) {
-      setError("Password must be at least 6 characters");
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      // First, register the account
-      const regRes = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: regEmail,
-          password: regPassword,
-          name: regName || undefined,
-        }),
-      });
-
-      const regData = await regRes.json();
-
-      if (!regRes.ok) {
-        setError(regData.error || "Registration failed");
-        setLoading(false);
-        return;
-      }
-
-      // Then auto-login using our custom login endpoint
-      const loginRes = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: regEmail, password: regPassword }),
-      });
-
-      const loginData = await loginRes.json();
-
-      if (!loginRes.ok) {
-        setError("Account created! Please sign in manually.");
-        setMode("login");
-        setLoading(false);
-        return;
-      }
-
-      // Login succeeded — session cookie has been set.
-      window.location.reload();
-    } catch {
-      setError("An unexpected error occurred");
-      setLoading(false);
-    }
-  };
+  // Loading state while checking setup status
+  if (mode === "loading") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex items-center gap-3">
+          <Timer className="h-6 w-6 animate-pulse text-primary" />
+          <span className="text-muted-foreground">Loading...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="flex items-center justify-center gap-3 mb-8">
           <div className="h-10 w-10 rounded-lg bg-primary flex items-center justify-center">
@@ -123,18 +136,27 @@ export default function AuthForm() {
           </div>
           <div>
             <h1 className="text-xl font-bold">Time Tracker</h1>
-            <p className="text-xs text-muted-foreground">Track your time across devices</p>
+            <p className="text-xs text-muted-foreground">Track your time across days</p>
           </div>
         </div>
 
         <Card>
-          <CardHeader className="pb-4">
-            <Tabs value={mode} onValueChange={(v) => { setMode(v as "login" | "register"); setError(""); }}>
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="login">Sign In</TabsTrigger>
-                <TabsTrigger value="register">Create Account</TabsTrigger>
-              </TabsList>
-            </Tabs>
+          <CardHeader className="pb-4 text-center">
+            <div className="mx-auto mb-2 h-12 w-12 rounded-full bg-muted flex items-center justify-center">
+              {mode === "setup" ? (
+                <KeyRound className="h-6 w-6 text-primary" />
+              ) : (
+                <Lock className="h-6 w-6 text-primary" />
+              )}
+            </div>
+            <CardTitle className="text-lg">
+              {mode === "setup" ? "Create your password" : "Unlock"}
+            </CardTitle>
+            <CardDescription>
+              {mode === "setup"
+                ? "Set a password to protect your time tracking data. This password is not stored in the code."
+                : "Enter your password to access the app."}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             {error && (
@@ -144,90 +166,53 @@ export default function AuthForm() {
               </Alert>
             )}
 
-            {mode === "login" ? (
-              <form onSubmit={handleLogin} className="space-y-4">
-                <CardTitle className="text-base">Welcome back</CardTitle>
-                <CardDescription>Sign in to access your time tracking data.</CardDescription>
-
+            {mode === "setup" ? (
+              <form onSubmit={handleSetup} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="login-email">Email</Label>
+                  <Label htmlFor="new-password">Password</Label>
                   <Input
-                    id="login-email"
-                    type="email"
-                    placeholder="you@example.com"
-                    value={loginEmail}
-                    onChange={(e) => setLoginEmail(e.target.value)}
+                    id="new-password"
+                    type="password"
+                    placeholder="Min. 6 characters"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
                     required
                     autoFocus
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="login-password">Password</Label>
+                  <Label htmlFor="confirm-password">Confirm Password</Label>
                   <Input
-                    id="login-password"
+                    id="confirm-password"
                     type="password"
                     placeholder="••••••••"
-                    value={loginPassword}
-                    onChange={(e) => setLoginPassword(e.target.value)}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
                     required
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                  Sign In
+                  Set Password
                 </Button>
               </form>
             ) : (
-              <form onSubmit={handleRegister} className="space-y-4">
-                <CardTitle className="text-base">Create your account</CardTitle>
-                <CardDescription>Start tracking your time across all your devices.</CardDescription>
-
+              <form onSubmit={handleUnlock} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="reg-name">Name (optional)</Label>
+                  <Label htmlFor="unlock-password" className="sr-only">Password</Label>
                   <Input
-                    id="reg-name"
-                    type="text"
-                    placeholder="Your name"
-                    value={regName}
-                    onChange={(e) => setRegName(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="reg-email">Email</Label>
-                  <Input
-                    id="reg-email"
-                    type="email"
-                    placeholder="you@example.com"
-                    value={regEmail}
-                    onChange={(e) => setRegEmail(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="reg-password">Password</Label>
-                  <Input
-                    id="reg-password"
+                    id="unlock-password"
                     type="password"
-                    placeholder="Min. 6 characters"
-                    value={regPassword}
-                    onChange={(e) => setRegPassword(e.target.value)}
+                    placeholder="Enter password"
+                    value={unlockPassword}
+                    onChange={(e) => setUnlockPassword(e.target.value)}
                     required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="reg-confirm">Confirm Password</Label>
-                  <Input
-                    id="reg-confirm"
-                    type="password"
-                    placeholder="••••••••"
-                    value={regConfirmPassword}
-                    onChange={(e) => setRegConfirmPassword(e.target.value)}
-                    required
+                    autoFocus
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                  Create Account
+                  Unlock
                 </Button>
               </form>
             )}

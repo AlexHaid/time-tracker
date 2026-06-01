@@ -7,27 +7,16 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut } from "lucide-react";
+import { Lock } from "lucide-react";
 
 export default function UserMenu() {
   const { data: session } = useSession();
 
   if (!session?.user) return null;
 
-  const email = session.user.email || "";
-  const name = session.user.name || email.split("@")[0];
-  const initials = name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
-
-  const handleSignOut = async () => {
+  const handleLock = async () => {
     // Call server-side logout to clear HttpOnly cookies
     try {
       await fetch("/api/auth/logout", { method: "POST" });
@@ -42,26 +31,17 @@ export default function UserMenu() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm" className="h-8 gap-2 text-xs">
-          <div className="h-5 w-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-bold">
-            {initials}
-          </div>
-          <span className="hidden sm:inline max-w-[120px] truncate">{name}</span>
+          <Lock className="h-3.5 w-3.5" />
+          <span className="hidden sm:inline">Lock</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel>
-          <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium">{name}</p>
-            <p className="text-xs text-muted-foreground">{email}</p>
-          </div>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
+      <DropdownMenuContent align="end">
         <DropdownMenuItem
-          onClick={handleSignOut}
+          onClick={handleLock}
           className="text-destructive cursor-pointer"
         >
-          <LogOut className="h-4 w-4 mr-2" />
-          Sign Out
+          <Lock className="h-4 w-4 mr-2" />
+          Lock App
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

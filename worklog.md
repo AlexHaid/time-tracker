@@ -148,3 +148,27 @@ Stage Summary:
 - Session cookie set directly from server response, fully compatible with NextAuth's session system
 - No more redirect loops or localhost connection refused errors
 - Sign out clears cookies directly without relying on NextAuth's signOut
+
+---
+Task ID: 7
+Agent: Main
+Task: Convert to single-user app with password lock (no registration, no credentials in code)
+
+Work Log:
+- Added AppSetting model to Prisma schema (key-value store for app config like password_hash)
+- Ran db:push to sync schema changes
+- Created /api/auth/status endpoint: returns {isSetup: boolean} to check if password has been set
+- Created /api/auth/setup endpoint: stores bcrypt-hashed password in AppSetting table, auto-creates single "owner" User record, can only be called once
+- Updated /api/auth/login endpoint: now takes just {password} (no email), checks against stored hash in AppSetting, finds owner user, creates JWT session
+- Rewrote AuthForm.tsx: simple two-mode form — "setup" mode (create password + confirm) on first visit, "unlock" mode (single password field) after that. Auto-detects mode via /api/auth/status
+- Updated UserMenu.tsx: simplified to "Lock App" button (lock icon), no user info/email display needed for single-user mode
+- Removed /api/auth/register endpoint (no public registration)
+- All endpoints tested: setup, status, login (correct/wrong password), setup-again rejection, logout, session verification
+- All lint checks pass
+
+Stage Summary:
+- Single-user password lock: no registration, no email, just a password
+- Password stored as bcrypt hash in DB (AppSetting table), not in code or .env
+- First launch shows "Create Password" screen, subsequent visits show "Unlock" screen
+- UserMenu replaced with simple "Lock App" button
+- Registration endpoint removed

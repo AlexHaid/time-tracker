@@ -8,67 +8,64 @@ const SESSION_MAX_AGE = 30 * 24 * 60 * 60; // 30 days
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { email, password } = body;
+    const { password } = body;
 
-    if (!email || !password) {
+    if (!password) {
       return NextResponse.json(
-        { error: "Email and password are required" },
+        { error: "Password is required" },
         { status: 400 }
       );
     }
 
-    // Find user
-    const user = await db.user.findUnique({
-      where: { email },
+    // Get stored password hash
+    const setting = await db.appSetting.findUnique({
+      where: { key: "password_hash" },
     });
 
-    if (!user) {
+    if (!setting) {
       return NextResponse.json(
-        { error: "Invalid email or password" },
-        { status: 401 }
+        { error: "App not set up yet" },
+        { status: 400 }
       );
     }
 
     // Verify password
-    const isValid = await compare(password, user.passwordHash);
+    const isValid = await compare(password, setting.value);
     if (!isValid) {
       return NextResponse.json(
-        { error: "Invalid email or password" },
+        { error: "Wrong password" },
         { status: 401 }
+      );
+    }
+
+    // Find the owner user
+    const owner = await db.user.findFirst({
+      where: { email: "owner@local" },
+    });
+
+    if (!owner) {
+      return NextResponse.json(
+        { error: "Owner account not found" },
+        { status: 500 }
       );
     }
 
     // Create JWT session token (same format as NextAuth)
     const token = await encode({
       token: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        sub: user.id,
+        id: owner.id,
+        email: owner.email,
+        name: owner.name,
+        sub: owner.id,
       },
       secret: process.env.NEXTAUTH_SECRET!,
       maxAge: SESSION_MAX_AGE,
     });
 
-    // Determine the correct host from proxy headers
-    const forwardedHost = req.headers.get("x-forwarded-host");
-    const forwardedProto = req.headers.get("x-forwarded-proto");
-    const host = req.headers.get("host");
-    const effectiveHost = forwardedHost || host || "localhost";
-    const effectiveProto =
-      forwardedProto || (effectiveHost.startsWith("localhost") ? "http" : "https");
-
     // Build the response
-    const response = NextResponse.json({
-      success: true,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-      },
-    });
+    const response = NextResponse.json({ success: true });
 
-    // Set the session cookie with the correct same attributes as NextAuth
+    // Set the session cookie
     response.cookies.set({
       name: "next-auth.session-token",
       value: token,
@@ -76,18 +73,6 @@ export async function POST(req: NextRequest) {
       sameSite: "lax",
       path: "/",
       maxAge: SESSION_MAX_AGE,
-      secure: effectiveProto === "https",
-    });
-
-    // Also set the callback-url cookie to help NextAuth know the correct origin
-    const callbackUrl = `${effectiveProto}://${effectiveHost}`;
-    response.cookies.set({
-      name: "next-auth.callback-url",
-      value: callbackUrl,
-      sameSite: "lax",
-      path: "/",
-      maxAge: SESSION_MAX_AGE,
-      secure: effectiveProto === "https",
     });
 
     return response;
