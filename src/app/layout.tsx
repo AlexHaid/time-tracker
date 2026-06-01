@@ -16,9 +16,6 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Time Tracker",
   description: "Track your time across days and periods with a beautiful calendar interface.",
-  icons: {
-    icon: "/logo.svg",
-  },
 };
 
 export default function RootLayout({
