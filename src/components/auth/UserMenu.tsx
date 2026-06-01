@@ -28,13 +28,9 @@ export default function UserMenu() {
     .slice(0, 2);
 
   const handleSignOut = async () => {
-    // Clear the session cookie directly
-    document.cookie = "next-auth.session-token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    document.cookie = "next-auth.callback-url=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    document.cookie = "next-auth.csrf-token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    // Also call NextAuth signOut as backup
+    // Call server-side logout to clear HttpOnly cookies
     try {
-      await fetch("/api/auth/signout", { method: "POST" });
+      await fetch("/api/auth/logout", { method: "POST" });
     } catch {
       // ignore
     }
