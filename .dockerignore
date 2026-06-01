@@ -1,0 +1,17 @@
+node_modules
+.next
+.git
+.env
+.env.*
+*.log
+db/
+download/
+examples/
+mini-services/
+skills/
+.claude
+.z-ai-config
+dev.log
+server.log
+worklog.md
+Caddyfile

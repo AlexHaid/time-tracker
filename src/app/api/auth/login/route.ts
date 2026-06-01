@@ -2,11 +2,25 @@ import { NextRequest, NextResponse } from "next/server";
 import { compare } from "bcryptjs";
 import { db } from "@/lib/db";
 import { encode } from "next-auth/jwt";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 const SESSION_MAX_AGE = 30 * 24 * 60 * 60; // 30 days
 
 export async function POST(req: NextRequest) {
   try {
+    // Rate limit by IP
+    const ip = req.headers.get("x-real-ip") || req.headers.get("x-forwarded-for") || "unknown";
+    const { allowed, retryAfterMs } = checkRateLimit(ip);
+    if (!allowed) {
+      return NextResponse.json(
+        { error: "Too many login attempts. Please try again later." },
+        {
+          status: 429,
+          headers: { "Retry-After": String(Math.ceil(retryAfterMs / 1000)) },
+        }
+      );
+    }
+
     const body = await req.json();
     const { password } = body;
 
@@ -73,6 +87,7 @@ export async function POST(req: NextRequest) {
       sameSite: "lax",
       path: "/",
       maxAge: SESSION_MAX_AGE,
+      secure: process.env.NODE_ENV === "production",
     });
 
     return response;

@@ -1,0 +1,33 @@
+# ============================================
+# Time Tracker — Docker Compose for Production
+# ============================================
+#
+# Usage:
+#   docker compose up -d        → Start the app
+#   docker compose logs -f       → View logs
+#   docker compose down          → Stop the app
+#   docker compose up -d --build → Rebuild and restart
+#
+# The SQLite database is persisted in a Docker volume.
+# First visit will show a "Create Password" screen.
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: time-tracker
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=file:/app/data/time-tracker.db
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-change-me-to-a-random-string}
+      - NEXTAUTH_TRUST_HOST=true
+      - NODE_ENV=production
+    volumes:
+      - db-data:/app/data
+
+volumes:
+  db-data:
+    driver: local

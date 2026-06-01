@@ -3,7 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
 import { db } from "@/lib/db";
 
-export const authOptions: NextAuthOptions = {
+export const authOptions: NextAuthOptions & { trustHost?: boolean } = {
   // Trust the X-Forwarded-Host and X-Forwarded-Proto headers from the reverse proxy
   trustHost: true,
 
