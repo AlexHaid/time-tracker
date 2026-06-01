@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { signIn, getSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,10 +12,14 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Timer, AlertCircle, Loader2 } from "lucide-react";
 
 export default function AuthForm() {
-  const router = useRouter();
+  const searchParams = useSearchParams();
+  const hasAuthError = searchParams.get("auth_error") === "1";
   const [mode, setMode] = useState<"login" | "register">("login");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Combine URL error with form error
+  const displayError = error || (hasAuthError ? "Invalid email or password" : "");
 
   // Login fields
   const [loginEmail, setLoginEmail] = useState("");
@@ -27,37 +31,19 @@ export default function AuthForm() {
   const [regPassword, setRegPassword] = useState("");
   const [regConfirmPassword, setRegConfirmPassword] = useState("");
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
-    try {
-      const result = await signIn("credentials", {
-        email: loginEmail,
-        password: loginPassword,
-        redirect: false,
-      });
-
-      if (result?.error) {
-        setError("Invalid email or password");
-        setLoading(false);
-        return;
-      }
-
-      // Verify the session was established
-      const session = await getSession();
-      if (session) {
-        // Force a full page reload to ensure all components pick up the new session
-        window.location.reload();
-      } else {
-        setError("Login failed — session could not be established");
-        setLoading(false);
-      }
-    } catch {
-      setError("An unexpected error occurred");
-      setLoading(false);
-    }
+    // Use NextAuth's natural redirect flow (no redirect: false)
+    // This makes a full-page form submission so the session cookie
+    // is properly set by the browser before the page loads
+    signIn("credentials", {
+      email: loginEmail,
+      password: loginPassword,
+      callbackUrl: "/",
+    });
   };
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -95,29 +81,12 @@ export default function AuthForm() {
         return;
       }
 
-      // Auto sign in after registration
-      const result = await signIn("credentials", {
+      // Auto sign in after registration using NextAuth's natural redirect
+      signIn("credentials", {
         email: regEmail,
         password: regPassword,
-        redirect: false,
+        callbackUrl: "/",
       });
-
-      if (result?.error) {
-        setError("Account created! Please sign in manually.");
-        setMode("login");
-        setLoading(false);
-        return;
-      }
-
-      // Verify the session was established
-      const session = await getSession();
-      if (session) {
-        window.location.reload();
-      } else {
-        setError("Account created! Please sign in manually.");
-        setMode("login");
-        setLoading(false);
-      }
     } catch {
       setError("An unexpected error occurred");
       setLoading(false);
@@ -148,10 +117,10 @@ export default function AuthForm() {
             </Tabs>
           </CardHeader>
           <CardContent>
-            {error && (
+            {displayError && (
               <Alert variant="destructive" className="mb-4">
                 <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
+                <AlertDescription>{displayError}</AlertDescription>
               </Alert>
             )}
 

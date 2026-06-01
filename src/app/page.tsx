@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import { parseISO } from "date-fns";
 import { Clock, Timer } from "lucide-react";
@@ -218,7 +218,18 @@ export default function TimeTrackerPage() {
 
   // Show auth form if not authenticated
   if (!isAuthenticated) {
-    return <AuthForm />;
+    return (
+      <Suspense fallback={
+        <div className="min-h-screen flex items-center justify-center bg-background">
+          <div className="flex items-center gap-3">
+            <Timer className="h-6 w-6 animate-pulse text-primary" />
+            <span className="text-muted-foreground">Loading...</span>
+          </div>
+        </div>
+      }>
+        <AuthForm />
+      </Suspense>
+    );
   }
 
   return (

@@ -42,7 +42,7 @@ export const authOptions: NextAuthOptions = {
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   pages: {
-    // We handle auth inline, no separate pages needed
+    error: "/?auth_error=1",
   },
   callbacks: {
     async jwt({ token, user }) {
