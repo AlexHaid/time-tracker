@@ -9,7 +9,6 @@ import {
   endOfWeek,
   addDays,
   isSameMonth,
-  isSameDay,
   isToday,
   addMonths,
   subMonths,
@@ -18,7 +17,7 @@ import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { formatMinutesShort } from "@/lib/time-tracker/time-parser";
-import type { TimeEntry } from "@/lib/time-tracker/types";
+import type { EntriesByDate } from "@/lib/time-tracker/types";
 
 interface CalendarGridProps {
   currentMonth: Date;
@@ -26,7 +25,7 @@ interface CalendarGridProps {
   selectedDate: string | null;
   onDateSelect: (date: string) => void;
   onAddTask: (date: string) => void;
-  entries: TimeEntry[];
+  entriesByDate: EntriesByDate;
 }
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -37,18 +36,8 @@ export default function CalendarGrid({
   selectedDate,
   onDateSelect,
   onAddTask,
-  entries,
+  entriesByDate,
 }: CalendarGridProps) {
-  // Group entries by date for quick lookup
-  const entriesByDate = useMemo(() => {
-    const map: Record<string, TimeEntry[]> = {};
-    for (const entry of entries) {
-      if (!map[entry.date]) map[entry.date] = [];
-      map[entry.date].push(entry);
-    }
-    return map;
-  }, [entries]);
-
   // Generate the calendar days (6 weeks to fill grid)
   const calendarDays = useMemo(() => {
     const monthStart = startOfMonth(currentMonth);

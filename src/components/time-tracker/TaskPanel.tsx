@@ -12,11 +12,14 @@ import { cn } from "@/lib/utils";
 import { formatMinutes } from "@/lib/time-tracker/time-parser";
 import type { TimeEntry } from "@/lib/time-tracker/types";
 
+/** TimeEntry augmented with date context (date comes from the key in EntriesByDate) */
+export type TimeEntryWithDate = TimeEntry & { date: string };
+
 interface TaskPanelProps {
   selectedDate: string | null;
-  entries: TimeEntry[];
-  onEdit: (entry: TimeEntry) => void;
-  onDelete: (entry: TimeEntry) => void;
+  entries: TimeEntryWithDate[];
+  onEdit: (entry: TimeEntryWithDate) => void;
+  onDelete: (entry: TimeEntryWithDate) => void;
 }
 
 export default function TaskPanel({
@@ -98,7 +101,7 @@ export default function TaskPanel({
 }
 
 interface TaskItemProps {
-  entry: TimeEntry;
+  entry: TimeEntryWithDate;
   onEdit: () => void;
   onDelete: () => void;
 }

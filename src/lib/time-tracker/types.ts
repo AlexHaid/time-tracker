@@ -2,9 +2,14 @@ export interface TimeEntry {
   id: string;
   name: string;
   description: string;
-  date: string; // YYYY-MM-DD
   spentMinutes: number;
 }
+
+/**
+ * Date-keyed entries map.
+ * Key is YYYY-MM-DD, value is array of tasks for that date.
+ */
+export type EntriesByDate = Record<string, TimeEntry[]>;
 
 export interface TaskFormData {
   name: string;
@@ -17,6 +22,6 @@ export interface TaskFormData {
 }
 
 export interface StorageData {
-  entries: TimeEntry[];
+  entries: EntriesByDate;
   version: number;
 }

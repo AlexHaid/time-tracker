@@ -18,13 +18,14 @@ import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CalendarDays, AlertCircle } from "lucide-react";
 import { parseTimeInput, formatMinutes, getDatesInRange } from "@/lib/time-tracker/time-parser";
-import type { TaskFormData, TimeEntry } from "@/lib/time-tracker/types";
+import type { TaskFormData } from "@/lib/time-tracker/types";
+import type { TimeEntryWithDate } from "@/components/time-tracker/TaskPanel";
 
 interface TaskModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   date: string;
-  editingEntry: TimeEntry | null;
+  editingEntry: TimeEntryWithDate | null;
   onSubmit: (data: TaskFormData) => void;
 }
 
@@ -38,7 +39,7 @@ const emptyForm: TaskFormData = {
   includeNonWorkingDays: false,
 };
 
-function getInitialForm(date: string, editingEntry: TimeEntry | null): TaskFormData {
+function getInitialForm(date: string, editingEntry: TimeEntryWithDate | null): TaskFormData {
   if (editingEntry) {
     return {
       name: editingEntry.name,

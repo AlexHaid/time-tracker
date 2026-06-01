@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { parseISO } from "date-fns";
 import { Clock, Timer } from "lucide-react";
 import CalendarGrid from "@/components/time-tracker/CalendarGrid";
@@ -8,17 +8,17 @@ import TaskPanel from "@/components/time-tracker/TaskPanel";
 import TaskModal from "@/components/time-tracker/TaskModal";
 import DeleteConfirmDialog from "@/components/time-tracker/DeleteConfirmDialog";
 import ImportExportBar from "@/components/time-tracker/ImportExportBar";
-import { getEntries, addEntries, updateEntry, deleteEntry, generateId } from "@/lib/time-tracker/storage";
+import { getEntriesByDate, addEntries, updateEntry, deleteEntry, generateId } from "@/lib/time-tracker/storage";
 import { parseTimeInput, getDatesInRange, formatDate } from "@/lib/time-tracker/time-parser";
-import type { TimeEntry, TaskFormData } from "@/lib/time-tracker/types";
+import type { TimeEntry, EntriesByDate, TaskFormData } from "@/lib/time-tracker/types";
 
 function getTodayString(): string {
   return formatDate(new Date());
 }
 
-function loadInitialEntries(): TimeEntry[] {
-  if (typeof window === "undefined") return [];
-  return getEntries();
+function loadInitialEntries(): EntriesByDate {
+  if (typeof window === "undefined") return {};
+  return getEntriesByDate();
 }
 
 export default function TimeTrackerPage() {
@@ -26,27 +26,29 @@ export default function TimeTrackerPage() {
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   // Selected date (YYYY-MM-DD) - initialize with today
   const [selectedDate, setSelectedDate] = useState<string>(getTodayString);
-  // All entries (loaded from localStorage via lazy initializer)
-  const [entries, setEntries] = useState<TimeEntry[]>(loadInitialEntries);
+  // All entries grouped by date (loaded from localStorage via lazy initializer)
+  const [entriesByDate, setEntriesByDate] = useState<EntriesByDate>(loadInitialEntries);
   // Task modal state
   const [taskModalOpen, setTaskModalOpen] = useState(false);
   const [taskModalDate, setTaskModalDate] = useState<string>("");
-  const [editingEntry, setEditingEntry] = useState<TimeEntry | null>(null);
+  const [editingEntry, setEditingEntry] = useState<(TimeEntry & { date: string }) | null>(null);
   // Modal key - increments each time modal opens to force fresh state
   const [modalKey, setModalKey] = useState(0);
   // Delete confirmation state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [deletingEntry, setDeletingEntry] = useState<TimeEntry | null>(null);
+  const [deletingEntry, setDeletingEntry] = useState<(TimeEntry & { date: string }) | null>(null);
 
   // Refresh entries from localStorage
   const refreshEntries = useCallback(() => {
-    setEntries(getEntries());
+    setEntriesByDate(getEntriesByDate());
   }, []);
 
   // Get entries for the selected date
-  const selectedDateEntries = selectedDate
-    ? entries.filter((e) => e.date === selectedDate)
-    : [];
+  const selectedDateEntries = useMemo(() => {
+    if (!selectedDate) return [];
+    const list = entriesByDate[selectedDate] || [];
+    return list.map((e) => ({ ...e, date: selectedDate }));
+  }, [entriesByDate, selectedDate]);
 
   // Calculate total time for selected date
   const selectedDateTotalMinutes = selectedDateEntries.reduce(
@@ -55,19 +57,23 @@ export default function TimeTrackerPage() {
   );
 
   // Calculate total time for current month
-  const monthTotalMinutes = entries
-    .filter((e) => {
+  const monthTotalMinutes = useMemo(() => {
+    let total = 0;
+    for (const [dateKey, list] of Object.entries(entriesByDate)) {
       try {
-        const entryDate = parseISO(e.date + "T00:00:00");
-        return (
+        const entryDate = parseISO(dateKey + "T00:00:00");
+        if (
           entryDate.getMonth() === currentMonth.getMonth() &&
           entryDate.getFullYear() === currentMonth.getFullYear()
-        );
+        ) {
+          total += list.reduce((s, e) => s + e.spentMinutes, 0);
+        }
       } catch {
-        return false;
+        // skip invalid dates
       }
-    })
-    .reduce((s, e) => s + e.spentMinutes, 0);
+    }
+    return total;
+  }, [entriesByDate, currentMonth]);
 
   // Handler: date selected on calendar
   const handleDateSelect = (date: string) => {
@@ -83,7 +89,7 @@ export default function TimeTrackerPage() {
   };
 
   // Handler: edit entry from task panel
-  const handleEditEntry = (entry: TimeEntry) => {
+  const handleEditEntry = (entry: TimeEntry & { date: string }) => {
     setTaskModalDate(entry.date);
     setEditingEntry(entry);
     setModalKey((k) => k + 1);
@@ -91,7 +97,7 @@ export default function TimeTrackerPage() {
   };
 
   // Handler: delete entry from task panel
-  const handleDeleteEntry = (entry: TimeEntry) => {
+  const handleDeleteEntry = (entry: TimeEntry & { date: string }) => {
     setDeletingEntry(entry);
     setDeleteDialogOpen(true);
   };
@@ -99,7 +105,7 @@ export default function TimeTrackerPage() {
   // Handler: confirm delete
   const handleConfirmDelete = () => {
     if (deletingEntry) {
-      deleteEntry(deletingEntry.id);
+      deleteEntry(deletingEntry.date, deletingEntry.id);
       refreshEntries();
     }
     setDeleteDialogOpen(false);
@@ -113,7 +119,7 @@ export default function TimeTrackerPage() {
 
     if (editingEntry) {
       // Update existing entry
-      updateEntry(editingEntry.id, {
+      updateEntry(editingEntry.id, editingEntry.date, {
         name: data.name.trim(),
         description: data.description.trim(),
         date: data.date,
@@ -127,23 +133,28 @@ export default function TimeTrackerPage() {
           data.periodEndDate,
           data.includeNonWorkingDays
         );
-        const newEntries: TimeEntry[] = dates.map((d) => ({
-          id: generateId(),
-          name: data.name.trim(),
-          description: data.description.trim(),
+        const newEntries = dates.map((d) => ({
           date: d,
-          spentMinutes: minutes,
+          entry: {
+            id: generateId(),
+            name: data.name.trim(),
+            description: data.description.trim(),
+            spentMinutes: minutes,
+          },
         }));
         addEntries(newEntries);
       } else {
-        const newEntry: TimeEntry = {
-          id: generateId(),
-          name: data.name.trim(),
-          description: data.description.trim(),
-          date: data.date,
-          spentMinutes: minutes,
-        };
-        addEntries([newEntry]);
+        addEntries([
+          {
+            date: data.date,
+            entry: {
+              id: generateId(),
+              name: data.name.trim(),
+              description: data.description.trim(),
+              spentMinutes: minutes,
+            },
+          },
+        ]);
       }
     }
 
@@ -200,7 +211,7 @@ export default function TimeTrackerPage() {
               selectedDate={selectedDate}
               onDateSelect={handleDateSelect}
               onAddTask={handleAddTask}
-              entries={entries}
+              entriesByDate={entriesByDate}
             />
           </div>
 
