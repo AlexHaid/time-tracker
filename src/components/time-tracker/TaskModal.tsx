@@ -181,10 +181,7 @@ export default function TaskModal({
               onValueChange={(value) => setForm({ ...form, type: value as WorkType })}
             >
               <SelectTrigger id="work-type" className="w-full">
-                <div className="flex items-center gap-2">
-                  <span className={`h-2.5 w-2.5 rounded-full ${WORK_TYPE_COLORS[form.type].dot}`} />
-                  <SelectValue placeholder="Select type" />
-                </div>
+                <SelectValue placeholder="Select type" />
               </SelectTrigger>
               <SelectContent>
                 {WORK_TYPES.map((type) => (
