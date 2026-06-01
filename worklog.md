@@ -127,3 +127,24 @@ Stage Summary:
 - Natural redirect flow: more reliable cookie handling than AJAX redirect: false
 - Caddyfile updated to forward X-Forwarded-Host header
 - All lint checks pass
+
+---
+Task ID: 6
+Agent: Main
+Task: Fix login redirect loop — replace NextAuth signIn with custom login endpoint
+
+Work Log:
+- Identified that NextAuth's signIn function (both redirect:true and redirect:false) has issues behind Caddy reverse proxy — either redirects to wrong host or session cookie isn't stored
+- Created custom /api/auth/login endpoint that: validates credentials, creates JWT session token using NextAuth's encode(), sets session cookie with correct SameSite/Path/Domain, returns JSON success/error response
+- Updated AuthForm.tsx: replaced NextAuth signIn() with fetch() to /api/auth/login; on success calls window.location.reload(); on error shows error message
+- Updated UserMenu.tsx: replaced NextAuth signOut() with direct cookie clearing + window.location.reload()
+- Simplified NextAuth route handler back to standard pattern (removed broken dynamic NEXTAUTH_URL logic)
+- Simplified auth.ts (removed custom cookies config and redirect callback that were added for proxy workaround)
+- Removed Suspense wrapper from page.tsx (AuthForm no longer uses useSearchParams)
+- Tested full end-to-end flow through Caddy proxy: login, session, protected API access all working
+
+Stage Summary:
+- Custom /api/auth/login endpoint bypasses all NextAuth redirect issues
+- Session cookie set directly from server response, fully compatible with NextAuth's session system
+- No more redirect loops or localhost connection refused errors
+- Sign out clears cookies directly without relying on NextAuth's signOut

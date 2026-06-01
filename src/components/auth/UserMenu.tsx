@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useSession, signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -27,6 +27,21 @@ export default function UserMenu() {
     .toUpperCase()
     .slice(0, 2);
 
+  const handleSignOut = async () => {
+    // Clear the session cookie directly
+    document.cookie = "next-auth.session-token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    document.cookie = "next-auth.callback-url=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    document.cookie = "next-auth.csrf-token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    // Also call NextAuth signOut as backup
+    try {
+      await fetch("/api/auth/signout", { method: "POST" });
+    } catch {
+      // ignore
+    }
+    // Full reload to clear session state
+    window.location.reload();
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -46,10 +61,7 @@ export default function UserMenu() {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem
-          onClick={async () => {
-            await signOut({ redirect: false });
-            window.location.href = window.location.origin + "/";
-          }}
+          onClick={handleSignOut}
           className="text-destructive cursor-pointer"
         >
           <LogOut className="h-4 w-4 mr-2" />

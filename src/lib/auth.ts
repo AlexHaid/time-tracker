@@ -44,43 +44,6 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
-  cookies: {
-    sessionToken: {
-      name: "next-auth.session-token",
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: false, // Set to true only if serving over HTTPS directly (not through proxy)
-      },
-    },
-    callbackUrl: {
-      name: "next-auth.callback-url",
-      options: {
-        sameSite: "lax",
-        path: "/",
-        secure: false,
-      },
-    },
-    csrfToken: {
-      name: "next-auth.csrf-token",
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: false,
-      },
-    },
-    pkceCodeVerifier: {
-      name: "next-auth.pkce.code_verifier",
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: false,
-      },
-    },
-  },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
@@ -93,19 +56,6 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.id as string;
       }
       return session;
-    },
-    // Ensure redirects use the correct host from the proxy headers
-    async redirect({ url, baseUrl }) {
-      // If url is relative, prepend the baseUrl
-      if (url.startsWith("/")) return baseUrl + url;
-      // If url is already on the same origin, allow it
-      try {
-        if (new URL(url).origin === baseUrl) return url;
-      } catch {
-        // invalid URL, fall through
-      }
-      // Default to the baseUrl (which should now be correct with trustHost)
-      return baseUrl;
     },
   },
   secret: process.env.NEXTAUTH_SECRET,
