@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { parseISO } from "date-fns";
 import { Clock, Timer } from "lucide-react";
 import CalendarGrid from "@/components/time-tracker/CalendarGrid";
@@ -20,17 +20,17 @@ import {
 import { parseTimeInput, getDatesInRange, formatDate } from "@/lib/time-tracker/time-parser";
 import type { TimeEntry, EntriesByDate, TaskFormData } from "@/lib/time-tracker/types";
 
-function getTodayString(): string {
-  return formatDate(new Date());
-}
-
 export default function TimeTrackerPage() {
+  // Mounted flag — prevents hydration mismatch by deferring
+  // browser-only state (Date, localStorage) to client-side effect
+  const [mounted, setMounted] = useState(false);
+
   // Current month displayed in calendar
-  const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
+  const [currentMonth, setCurrentMonth] = useState<Date>(() => new Date());
   // Selected date (YYYY-MM-DD)
-  const [selectedDate, setSelectedDate] = useState<string>(getTodayString);
+  const [selectedDate, setSelectedDate] = useState<string>("");
   // All entries grouped by date
-  const [entriesByDate, setEntriesByDate] = useState<EntriesByDate>(() => fetchEntries());
+  const [entriesByDate, setEntriesByDate] = useState<EntriesByDate>({});
   // Task modal state
   const [taskModalOpen, setTaskModalOpen] = useState(false);
   const [taskModalDate, setTaskModalDate] = useState<string>("");
@@ -40,6 +40,15 @@ export default function TimeTrackerPage() {
   // Delete confirmation state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingEntry, setDeletingEntry] = useState<(TimeEntry & { date: string }) | null>(null);
+
+  // Hydrate browser-only state after mount
+  useEffect(() => {
+    const today = formatDate(new Date());
+    setSelectedDate(today);
+    setCurrentMonth(new Date());
+    setEntriesByDate(fetchEntries());
+    setMounted(true);
+  }, []);
 
   // Refresh entries from localStorage
   const refreshEntries = useCallback(() => {
@@ -171,7 +180,7 @@ export default function TimeTrackerPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background" suppressHydrationWarning>
+    <div className="min-h-screen flex flex-col bg-background">
       {/* Header */}
       <header className="border-b bg-card">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between flex-wrap gap-3">
@@ -191,8 +200,8 @@ export default function TimeTrackerPage() {
             <div className="flex items-center gap-2 text-sm">
               <Clock className="h-4 w-4 text-muted-foreground" />
               <span className="text-muted-foreground">This month:</span>
-              <span className="font-semibold" suppressHydrationWarning>
-                {formatTotal(monthTotalMinutes)}
+              <span className="font-semibold">
+                {mounted ? formatTotal(monthTotalMinutes) : "\u2013"}
               </span>
             </div>
             <ImportExportBar onDataChanged={refreshEntries} />
