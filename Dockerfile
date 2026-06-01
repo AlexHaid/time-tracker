@@ -1,24 +1,24 @@
 # ============================================
 # Time Tracker — Static Site Dockerfile
-# Build with Bun, serve static files with Caddy
+# Build with Node.js, serve static files with Caddy
 # ============================================
 
 # Stage 1: Build the Next.js static export
-FROM oven/bun:1.2 AS builder
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
 # Copy dependency manifests first (for layer caching)
-COPY package.json bun.lock ./
+COPY package.json package-lock.json ./
 
 # Install dependencies
-RUN bun install --frozen-lockfile
+RUN npm ci
 
 # Copy source code
 COPY . .
 
 # Build static export → /app/out
-RUN bun run build
+RUN npm run build
 
 # Stage 2: Serve static files with Caddy
 FROM caddy:2-alpine

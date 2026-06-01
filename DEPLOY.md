@@ -8,8 +8,8 @@ Just static HTML/CSS/JS files that any web server can host.
 ## Quick Build
 
 ```bash
-bun install
-bun run build
+npm install
+npm run build
 # → Static files in ./out/
 ```
 
@@ -19,7 +19,7 @@ bun run build
 
 ```bash
 # On your machine:
-bun run build
+npm run build
 scp -r out/* user@your-vps:/var/www/time-tracker/
 
 # On the VPS, install Caddy and use Caddyfile.prod:

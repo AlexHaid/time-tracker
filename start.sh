@@ -17,12 +17,12 @@ echo "=== Time Tracker — Static Build ==="
 # Install dependencies if needed
 if [ ! -d node_modules ]; then
   echo "📦 Installing dependencies..."
-  bun install --frozen-lockfile
+  npm ci
 fi
 
 # Build static export
 echo "🔨 Building static site..."
-bun run build
+npm run build
 
 echo ""
 echo "✅ Static site built in ./out/"
