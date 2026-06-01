@@ -104,3 +104,26 @@ Stage Summary:
 - Frontend conditionally renders auth form or main app based on session
 - Data now synced across devices via server-side database
 - UserMenu component in header with sign out functionality
+
+---
+Task ID: 5
+Agent: Main
+Task: Fix NextAuth redirect-to-localhost issue after login (behind Caddy reverse proxy)
+
+Work Log:
+- Identified root cause: NEXTAUTH_URL=http://localhost:3000 in .env caused NextAuth to construct redirect URLs pointing to localhost, which is unreachable from the browser when the app runs behind a Caddy reverse proxy
+- Removed NEXTAUTH_URL from .env, added NEXTAUTH_TRUST_HOST=true instead
+- Updated auth.ts: added trustHost: true, explicit cookie configuration (secure: false, sameSite: "lax" for all cookies), redirect callback to handle proxy headers correctly
+- Updated NextAuth route handler (src/app/api/auth/[...nextauth]/route.ts): dynamically determines NEXTAUTH_URL from X-Forwarded-Host and X-Forwarded-Proto headers (set by Caddy), falls back to Host header
+- Updated Caddyfile: added X-Forwarded-Host header to both reverse_proxy blocks
+- Updated AuthForm.tsx: switched from redirect: false (AJAX) to NextAuth's natural redirect flow for maximum cookie reliability; reads error from URL search params (?error=CredentialsSignin) instead of result object
+- Updated page.tsx: wrapped AuthForm in Suspense boundary (required for useSearchParams)
+- Fixed route handler bug: originally passed only Request to NextAuth handler, missing the context parameter with params (caused 500 errors)
+- Tested full flow via curl: registration, CSRF, credentials callback, session endpoint all working; redirect URL correctly reflects proxy headers
+
+Stage Summary:
+- Fixed: After login, NextAuth now redirects to the correct external host instead of localhost:3000
+- Dynamic NEXTAUTH_URL: computed per-request from X-Forwarded-Host/X-Forwarded-Proto headers
+- Natural redirect flow: more reliable cookie handling than AJAX redirect: false
+- Caddyfile updated to forward X-Forwarded-Host header
+- All lint checks pass

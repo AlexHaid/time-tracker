@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { signIn } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,10 +11,21 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Timer, AlertCircle, Loader2 } from "lucide-react";
 
+function getAuthError(searchParams: URLSearchParams): string {
+  const authError = searchParams.get("error");
+  if (!authError) return "";
+  if (authError === "CredentialsSignin") return "Invalid email or password";
+  return "Authentication failed. Please try again.";
+}
+
 export default function AuthForm() {
   const [mode, setMode] = useState<"login" | "register">("login");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+
+  // Check for error in URL params (set by NextAuth redirect)
+  const searchParams = useSearchParams();
+  const urlError = getAuthError(searchParams);
+  const [error, setError] = useState(urlError);
 
   // Login fields
   const [loginEmail, setLoginEmail] = useState("");
@@ -30,26 +42,22 @@ export default function AuthForm() {
     setError("");
     setLoading(true);
 
-    try {
-      const result = await signIn("credentials", {
-        email: loginEmail,
-        password: loginPassword,
-        redirect: false,
-      });
+    // Use NextAuth's natural redirect flow for maximum reliability.
+    // The signIn function will submit a form, which causes a full-page
+    // navigation. This is the most reliable way to set session cookies
+    // across all browsers and proxy configurations.
+    // Our dynamic NEXTAUTH_URL fix ensures the redirect goes to the
+    // correct host instead of localhost.
+    await signIn("credentials", {
+      email: loginEmail,
+      password: loginPassword,
+      callbackUrl: window.location.origin + window.location.pathname,
+    });
 
-      if (result?.error) {
-        setError("Invalid email or password");
-        setLoading(false);
-      } else {
-        // signIn succeeded — session cookie is now set in the browser.
-        // Reload the current page so useSession picks up the new session.
-        // Using replace to avoid the user pressing back and seeing the login form.
-        window.location.replace(window.location.pathname);
-      }
-    } catch {
-      setError("An unexpected error occurred");
-      setLoading(false);
-    }
+    // Note: the page will reload after this, so the code below
+    // won't execute on success. On error, NextAuth redirects back
+    // with ?error=... which we handle via the URL params.
+    setLoading(false);
   };
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -87,20 +95,14 @@ export default function AuthForm() {
         return;
       }
 
-      // Auto sign in after registration
-      const result = await signIn("credentials", {
+      // Auto sign in after registration using natural redirect flow
+      await signIn("credentials", {
         email: regEmail,
         password: regPassword,
-        redirect: false,
+        callbackUrl: window.location.origin + window.location.pathname,
       });
 
-      if (result?.error) {
-        setError("Account created! Please sign in manually.");
-        setMode("login");
-        setLoading(false);
-      } else {
-        window.location.replace(window.location.pathname);
-      }
+      setLoading(false);
     } catch {
       setError("An unexpected error occurred");
       setLoading(false);
