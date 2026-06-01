@@ -113,14 +113,12 @@ function TaskItem({ entry, onEdit, onDelete }: TaskItemProps) {
 
   return (
     <div className={styles.taskItem}>
-      {/* Type color indicator */}
-      <div
-        className={styles.typeDot}
-        style={{ backgroundColor: typeInfo.dotColor }}
-      />
-
       <div className={styles.taskContent}>
         <div className={styles.taskNameRow}>
+          <div
+            className={styles.typeDot}
+            style={{ backgroundColor: typeInfo.dotColor }}
+          />
           <h4 className={styles.taskName}>{entry.name}</h4>
           <span
             className={styles.typeBadge}
