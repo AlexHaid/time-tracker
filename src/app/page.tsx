@@ -19,6 +19,7 @@ import {
 } from "@/lib/time-tracker/api";
 import { parseTimeInput, getDatesInRange, formatDate } from "@/lib/time-tracker/time-parser";
 import type { TimeEntry, EntriesByDate, TaskFormData } from "@/lib/time-tracker/types";
+import styles from "./page.module.css";
 
 export default function TimeTrackerPage() {
   // Mounted flag — prevents hydration mismatch by deferring
@@ -180,27 +181,27 @@ export default function TimeTrackerPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className={styles.container}>
       {/* Header */}
-      <header className="border-b bg-card">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between flex-wrap gap-3">
-          <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-lg bg-primary flex items-center justify-center">
-              <Timer className="h-5 w-5 text-primary-foreground" />
+      <header className={styles.header}>
+        <div className={styles.headerInner}>
+          <div className={styles.logoGroup}>
+            <div className={styles.logoIcon}>
+              <Timer style={{ height: "1.25rem", width: "1.25rem", color: "var(--primary-foreground)" }} />
             </div>
             <div>
-              <h1 className="text-lg font-bold leading-tight">Time Tracker</h1>
-              <p className="text-xs text-muted-foreground">
+              <h1 className={styles.title}>Time Tracker</h1>
+              <p className={styles.subtitle}>
                 Track your time across days and periods
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-4 flex-wrap">
+          <div className={styles.headerActions}>
             {/* Monthly total */}
-            <div className="flex items-center gap-2 text-sm">
-              <Clock className="h-4 w-4 text-muted-foreground" />
-              <span className="text-muted-foreground">This month:</span>
-              <span className="font-semibold">
+            <div className={styles.monthTotal}>
+              <Clock style={{ height: "1rem", width: "1rem" }} className={styles.mutedText} />
+              <span className={styles.mutedText}>This month:</span>
+              <span className={styles.monthTotalValue}>
                 {mounted ? formatTotal(monthTotalMinutes) : "\u2013"}
               </span>
             </div>
@@ -210,10 +211,10 @@ export default function TimeTrackerPage() {
       </header>
 
       {/* Main content */}
-      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
+      <main className={styles.main}>
+        <div className={styles.grid}>
           {/* Calendar - takes 2 columns on large screens */}
-          <div className="lg:col-span-2">
+          <div className={styles.calendarCol}>
             <CalendarGrid
               currentMonth={currentMonth}
               onMonthChange={setCurrentMonth}
@@ -226,7 +227,7 @@ export default function TimeTrackerPage() {
           </div>
 
           {/* Task Panel - 1 column */}
-          <div className="lg:col-span-1 min-h-[400px]">
+          <div className={styles.taskCol}>
             <TaskPanel
               selectedDate={selectedDate}
               entries={selectedDateEntries}
@@ -238,12 +239,12 @@ export default function TimeTrackerPage() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t bg-card mt-auto">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between text-xs text-muted-foreground">
+      <footer className={styles.footer}>
+        <div className={styles.footerInner}>
           <span>Time Tracker &mdash; Data stored locally in your browser</span>
           {selectedDate && selectedDateEntries.length > 0 && (
             <span>
-              Selected day total: <strong className="text-foreground">{formatTotal(selectedDateTotalMinutes)}</strong>
+              Selected day total: <strong className={styles.footerTotal}>{formatTotal(selectedDateTotalMinutes)}</strong>
             </span>
           )}
         </div>

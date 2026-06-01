@@ -1,0 +1,93 @@
+/* Badge CSS Module - migrated from Tailwind */
+
+.base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  padding: 0.125rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  width: fit-content;
+  white-space: nowrap;
+  flex-shrink: 0;
+  gap: 0.25rem;
+  transition: color 150ms, box-shadow 150ms;
+  overflow: hidden;
+}
+
+.base:focus-visible {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 50%, transparent);
+}
+
+.base[aria-invalid="true"] {
+  border-color: var(--destructive);
+  box-shadow: 0 0 0 2px color-mix(in oklch, var(--destructive) 20%, transparent);
+}
+
+:global(.dark) .base[aria-invalid="true"] {
+  box-shadow: 0 0 0 2px color-mix(in oklch, var(--destructive) 40%, transparent);
+}
+
+.base svg {
+  width: 0.75rem;
+  height: 0.75rem;
+  pointer-events: none;
+}
+
+/* Variant: default */
+.variantDefault {
+  border-color: transparent;
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+}
+
+a .variantDefault:hover {
+  background-color: color-mix(in oklch, var(--primary) 90%, transparent);
+}
+
+/* Variant: secondary */
+.variantSecondary {
+  border-color: transparent;
+  background-color: var(--secondary);
+  color: var(--secondary-foreground);
+}
+
+a .variantSecondary:hover {
+  background-color: color-mix(in oklch, var(--secondary) 90%, transparent);
+}
+
+/* Variant: destructive */
+.variantDestructive {
+  border-color: transparent;
+  background-color: var(--destructive);
+  color: white;
+}
+
+a .variantDestructive:hover {
+  background-color: color-mix(in oklch, var(--destructive) 90%, transparent);
+}
+
+.variantDestructive:focus-visible {
+  box-shadow: 0 0 0 3px color-mix(in oklch, var(--destructive) 20%, transparent);
+}
+
+:global(.dark) .variantDestructive {
+  background-color: color-mix(in oklch, var(--destructive) 60%, transparent);
+}
+
+:global(.dark) .variantDestructive:focus-visible {
+  box-shadow: 0 0 0 3px color-mix(in oklch, var(--destructive) 40%, transparent);
+}
+
+/* Variant: outline */
+.variantOutline {
+  color: var(--foreground);
+}
+
+a .variantOutline:hover {
+  background-color: var(--accent);
+  color: var(--accent-foreground);
+}

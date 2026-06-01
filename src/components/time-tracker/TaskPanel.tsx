@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { formatMinutes } from "@/lib/time-tracker/time-parser";
 import { WORK_TYPE_COLORS } from "@/lib/time-tracker/types";
 import type { TimeEntry, WorkType } from "@/lib/time-tracker/types";
+import styles from "./TaskPanel.module.css";
 
 /** TimeEntry augmented with date context (date comes from the key in EntriesByDate) */
 export type TimeEntryWithDate = TimeEntry & { date: string };
@@ -31,12 +32,12 @@ export default function TaskPanel({
 }: TaskPanelProps) {
   if (!selectedDate) {
     return (
-      <Card className="h-full flex items-center justify-center border-dashed">
-        <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-          <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-4">
-            <Clock className="h-6 w-6 text-muted-foreground" />
+      <Card className={styles.emptyCard}>
+        <CardContent className={styles.emptyContent}>
+          <div className={styles.emptyIcon}>
+            <Clock style={{ height: "1.5rem", width: "1.5rem", color: "var(--muted-foreground)" }} />
           </div>
-          <p className="text-muted-foreground text-sm">
+          <p className={styles.emptyText}>
             Select a day on the calendar to view tracked time
           </p>
         </CardContent>
@@ -50,18 +51,18 @@ export default function TaskPanel({
   const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
 
   return (
-    <Card className="h-full flex flex-col">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-base font-semibold">{formattedDate}</CardTitle>
+    <Card className={styles.card}>
+      <CardHeader className={styles.cardHeader}>
+        <div className={styles.headerRow}>
+          <CardTitle className={styles.cardTitle}>{formattedDate}</CardTitle>
           {isWeekend && (
-            <Badge variant="secondary" className="text-xs">
+            <Badge variant="secondary" style={{ fontSize: "0.75rem" }}>
               Weekend
             </Badge>
           )}
         </div>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Clock className="h-3.5 w-3.5" />
+        <div className={styles.metaRow}>
+          <Clock style={{ height: "0.875rem", width: "0.875rem" }} />
           <span>
             {entries.length} task{entries.length !== 1 ? "s" : ""} &middot;{" "}
             {formatMinutes(totalMinutes)}
@@ -69,22 +70,22 @@ export default function TaskPanel({
         </div>
       </CardHeader>
       <Separator />
-      <CardContent className="flex-1 p-0 overflow-hidden">
+      <CardContent style={{ flex: 1, padding: 0, overflow: "hidden" }}>
         {entries.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center px-4">
-            <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center mb-3">
-              <FileText className="h-5 w-5 text-muted-foreground" />
+          <div className={styles.emptyEntries}>
+            <div className={styles.emptyEntriesIcon}>
+              <FileText style={{ height: "1.25rem", width: "1.25rem", color: "var(--muted-foreground)" }} />
             </div>
-            <p className="text-sm text-muted-foreground">
+            <p className={styles.emptyEntriesText}>
               No tasks tracked on this day
             </p>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className={styles.emptyEntriesHint}>
               Hover over the day cell and click the + button to add one
             </p>
           </div>
         ) : (
-          <ScrollArea className="h-full max-h-[calc(100vh-360px)]">
-            <div className="p-3 space-y-2">
+          <ScrollArea style={{ height: "100%", maxHeight: "calc(100vh - 360px)" }}>
+            <div className={styles.taskList}>
               {entries.map((entry) => (
                 <TaskItem
                   key={entry.id}
@@ -111,55 +112,57 @@ function TaskItem({ entry, onEdit, onDelete }: TaskItemProps) {
   const typeInfo = WORK_TYPE_COLORS[entry.type || "development"];
 
   return (
-    <div
-      className={cn(
-        "group flex items-start gap-3 rounded-lg border p-3",
-        "bg-card hover:bg-accent/30 transition-colors"
-      )}
-    >
+    <div className={styles.taskItem}>
       {/* Type color indicator */}
-      <div className={cn("mt-1 h-2.5 w-2.5 rounded-full shrink-0", typeInfo.dot)} />
+      <div
+        className={styles.typeDot}
+        style={{ backgroundColor: typeInfo.dotColor }}
+      />
 
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <h4 className="text-sm font-medium truncate">{entry.name}</h4>
-          <Badge
-            variant="outline"
-            className={cn("text-[10px] px-1.5 py-0 h-4 shrink-0", typeInfo.badge)}
+      <div className={styles.taskContent}>
+        <div className={styles.taskNameRow}>
+          <h4 className={styles.taskName}>{entry.name}</h4>
+          <span
+            className={styles.typeBadge}
+            style={{
+              backgroundColor: typeInfo.badgeBg,
+              color: typeInfo.badgeText,
+              borderColor: typeInfo.badgeBorder,
+            }}
           >
             {typeInfo.label}
-          </Badge>
+          </span>
         </div>
         {entry.description && (
-          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+          <p className={styles.taskDescription}>
             {entry.description}
           </p>
         )}
-        <div className="flex items-center gap-1.5 mt-1.5">
-          <Clock className="h-3 w-3 text-muted-foreground" />
-          <span className={cn("text-xs font-medium", typeInfo.badgeText)}>
+        <div className={styles.taskTimeRow}>
+          <Clock style={{ height: "0.75rem", width: "0.75rem", color: "var(--muted-foreground)" }} />
+          <span className={styles.taskTimeText} style={{ color: typeInfo.text }}>
             {formatMinutes(entry.spentMinutes)}
           </span>
         </div>
       </div>
-      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+      <div className={styles.taskActions}>
         <Button
           variant="ghost"
           size="icon"
-          className="h-7 w-7"
+          className={styles.actionBtn}
           onClick={onEdit}
           aria-label={`Edit task ${entry.name}`}
         >
-          <Pencil className="h-3.5 w-3.5" />
+          <Pencil style={{ height: "0.875rem", width: "0.875rem" }} />
         </Button>
         <Button
           variant="ghost"
           size="icon"
-          className="h-7 w-7 text-destructive hover:text-destructive"
+          className={styles.deleteBtn}
           onClick={onDelete}
           aria-label={`Delete task ${entry.name}`}
         >
-          <Trash2 className="h-3.5 w-3.5" />
+          <Trash2 style={{ height: "0.875rem", width: "0.875rem" }} />
         </Button>
       </div>
     </div>

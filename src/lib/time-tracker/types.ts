@@ -4,18 +4,29 @@ export type WorkType = (typeof WORK_TYPES)[number];
 
 export const DEFAULT_WORK_TYPE: WorkType = "development";
 
-/** Color mapping for each work type */
-export const WORK_TYPE_COLORS: Record<WorkType, { dot: string; badge: string; badgeText: string; label: string }> = {
+/** Color mapping for each work type — stores actual CSS color values for inline styles */
+export const WORK_TYPE_COLORS: Record<WorkType, {
+  dotColor: string;
+  badgeBg: string;
+  badgeText: string;
+  badgeBorder: string;
+  text: string;
+  label: string;
+}> = {
   development: {
-    dot: "bg-emerald-500",
-    badge: "bg-emerald-100 text-emerald-800 border-emerald-200",
-    badgeText: "text-emerald-700",
+    dotColor: "#10b981",     /* emerald-500 */
+    badgeBg: "#d1fae5",      /* emerald-100 */
+    badgeText: "#065f46",    /* emerald-800 */
+    badgeBorder: "#a7f3d0",  /* emerald-200 */
+    text: "#047857",         /* emerald-700 */
     label: "Development",
   },
   meeting: {
-    dot: "bg-amber-500",
-    badge: "bg-amber-100 text-amber-800 border-amber-200",
-    badgeText: "text-amber-700",
+    dotColor: "#f59e0b",     /* amber-500 */
+    badgeBg: "#fef3c7",      /* amber-100 */
+    badgeText: "#92400e",    /* amber-800 */
+    badgeBorder: "#fde68a",  /* amber-200 */
+    text: "#b45309",         /* amber-700 */
     label: "Meeting",
   },
 };

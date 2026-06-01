@@ -11,6 +11,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import styles from "./DeleteConfirmDialog.module.css";
 
 interface DeleteConfirmDialogProps {
   open: boolean;
@@ -38,7 +39,7 @@ export default function DeleteConfirmDialog({
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction
             onClick={onConfirm}
-            className="bg-destructive text-white hover:bg-destructive/90"
+            className={styles.destructiveAction}
           >
             Delete
           </AlertDialogAction>

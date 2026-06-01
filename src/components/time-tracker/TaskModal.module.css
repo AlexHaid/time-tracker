@@ -1,0 +1,158 @@
+/* Form body scroll area */
+.formBody {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Each form section */
+.formSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Required asterisk */
+.required {
+  color: var(--destructive);
+}
+
+/* Error text */
+.errorText {
+  font-size: 0.75rem;
+  color: var(--destructive);
+}
+
+/* Input with error border */
+.inputError {
+  border-color: var(--destructive) !important;
+}
+
+/* Time preview */
+.timePreview {
+  font-size: 0.875rem;
+  color: var(--primary);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* Period checkbox area */
+.periodCheck {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.periodLabelArea {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.periodHint {
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+}
+
+/* Period options container */
+.periodOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-left: 1.75rem;
+  animation: slideInFromTop 200ms ease-out;
+}
+
+@keyframes slideInFromTop {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Work type select item */
+.typeSelectItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Type dot inside select */
+.typeDot {
+  height: 0.625rem;
+  width: 0.625rem;
+  border-radius: 9999px;
+  display: inline-block;
+}
+
+/* Date row with icon */
+.dateRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Time format hint */
+.formatHint {
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+}
+
+/* Dialog footer override */
+.footer {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border);
+}
+
+@media (min-width: 640px) {
+  .footer {
+    gap: 0;
+  }
+}
+
+/* Dialog content overrides */
+.dialogContent {
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (min-width: 640px) {
+  .dialogContent {
+    max-width: 480px;
+  }
+}
+
+.dialogHeader {
+  flex-shrink: 0;
+}
+
+/* Period preview alert */
+.periodAlert {
+  margin-top: 0;
+}
+
+.periodAlertText {
+  font-size: 0.75rem;
+}
+
+/* Textarea resize none */
+.textareaNoResize {
+  resize: none;
+}
+
+/* Cursor pointer label */
+.cursorLabel {
+  cursor: pointer;
+}

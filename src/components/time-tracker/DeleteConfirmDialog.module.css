@@ -1,0 +1,8 @@
+.destructiveAction {
+  background-color: var(--destructive);
+  color: white;
+}
+
+.destructiveAction:hover {
+  background-color: color-mix(in oklch, var(--destructive) 90%, transparent);
+}

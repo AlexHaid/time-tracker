@@ -1,0 +1,6 @@
+/* Toaster CSS Module - migrated from Tailwind */
+
+.toasterContent {
+  display: grid;
+  gap: 0.25rem;
+}

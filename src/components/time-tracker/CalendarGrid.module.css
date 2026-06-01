@@ -1,0 +1,219 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Header with month nav */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  padding: 0 0.25rem;
+}
+
+.headerTitleGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.headerTitle {
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+/* Weekday header row */
+.weekdayRow {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: 0.25rem;
+}
+
+.weekdayCell {
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--muted-foreground);
+  padding: 0.5rem 0;
+  user-select: none;
+}
+
+/* Day cells grid */
+.dayGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  flex: 1;
+  gap: 1px;
+  background-color: var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+/* Individual day cell */
+.dayCell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0.25rem;
+  min-height: 72px;
+  cursor: pointer;
+  transition: background-color 0.15s;
+  background-color: var(--card);
+}
+
+@media (min-width: 640px) {
+  .dayCell {
+    min-height: 80px;
+  }
+}
+
+.dayCell:hover {
+  background-color: color-mix(in oklch, var(--accent) 50%, transparent);
+}
+
+/* Out of month */
+.dayCellOutOfMonth {
+  background-color: color-mix(in oklch, var(--muted) 30%, transparent);
+}
+
+.dayCellOutOfMonth:hover {
+  background-color: color-mix(in oklch, var(--accent) 50%, transparent);
+}
+
+/* Selected */
+.dayCellSelected {
+  background-color: color-mix(in oklch, var(--primary) 10%, transparent) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--primary) 30%, transparent);
+}
+
+/* Today */
+.dayCellToday {
+  background-color: color-mix(in oklch, var(--accent) 30%, transparent);
+}
+
+/* Weekend */
+.dayCellWeekend {
+  background-color: color-mix(in oklch, var(--secondary) 20%, transparent);
+}
+
+/* Day number */
+.dayNum {
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1;
+  margin-top: 0.25rem;
+  user-select: none;
+}
+
+.dayNumOutOfMonth {
+  color: color-mix(in oklch, var(--muted-foreground) 50%, transparent);
+}
+
+.dayNumToday {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.dayNumSelected {
+  color: var(--primary);
+}
+
+/* Time summary area */
+.timeSummary {
+  margin-top: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.125rem;
+  width: 100%;
+  padding: 0 0.125rem;
+}
+
+.timeText {
+  font-size: 10px;
+  line-height: 1;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+  text-align: center;
+}
+
+.timeUnder {
+  color: #ef4444;
+}
+
+.timeExact {
+  color: #16a34a;
+}
+
+.timeOver {
+  color: #3b82f6;
+}
+
+/* Type indicator dots */
+.dotsRow {
+  display: flex;
+  gap: 0.125rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.dot {
+  height: 6px;
+  width: 6px;
+  border-radius: 9999px;
+}
+
+.dotFallback {
+  background-color: color-mix(in oklch, var(--primary) 70%, transparent);
+}
+
+.overflowCount {
+  font-size: 8px;
+  line-height: 1;
+  color: var(--muted-foreground);
+  font-weight: 700;
+}
+
+/* Plus button */
+.plusBtn {
+  position: absolute;
+  bottom: 0.25rem;
+  right: 0.25rem;
+  z-index: 10;
+  height: 1.25rem;
+  width: 1.25rem;
+  border-radius: 9999px;
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: background-color 0.15s;
+  animation: fadeInZoom 150ms ease-out;
+}
+
+.plusBtn:hover {
+  background-color: color-mix(in oklch, var(--primary) 90%, transparent);
+}
+
+@keyframes fadeInZoom {
+  from {
+    opacity: 0;
+    transform: scale(0.75);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

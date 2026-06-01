@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { exportEntries, importEntries, clearAllEntries } from "@/lib/time-tracker/api";
+import styles from "./ImportExportBar.module.css";
 
 interface ImportExportBarProps {
   onDataChanged: () => void;
@@ -91,19 +92,19 @@ export default function ImportExportBar({ onDataChanged }: ImportExportBarProps)
   };
 
   return (
-    <div className="flex items-center gap-2 flex-wrap">
-      <Button variant="outline" size="sm" onClick={handleImportClick} className="h-8 text-xs gap-1.5 cursor-pointer">
-        <Upload className="h-3.5 w-3.5" />
+    <div className={styles.bar}>
+      <Button variant="outline" size="sm" onClick={handleImportClick} className={styles.importBtn}>
+        <Upload style={{ height: "0.875rem", width: "0.875rem" }} />
         Import
       </Button>
-      <Button variant="outline" size="sm" onClick={handleExport} className="h-8 text-xs gap-1.5 cursor-pointer">
-        <Download className="h-3.5 w-3.5" />
+      <Button variant="outline" size="sm" onClick={handleExport} className={styles.exportBtn}>
+        <Download style={{ height: "0.875rem", width: "0.875rem" }} />
         Export
       </Button>
       <AlertDialog>
         <AlertDialogTrigger asChild>
-          <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5 text-destructive hover:text-destructive cursor-pointer">
-            <Trash2 className="h-3.5 w-3.5" />
+          <Button variant="outline" size="sm" className={styles.clearBtn}>
+            <Trash2 style={{ height: "0.875rem", width: "0.875rem" }} />
             Clear All
           </Button>
         </AlertDialogTrigger>
@@ -116,10 +117,10 @@ export default function ImportExportBar({ onDataChanged }: ImportExportBarProps)
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="cursor-pointer">Cancel</AlertDialogCancel>
+            <AlertDialogCancel style={{ cursor: "pointer" }}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleClearAll}
-              className="bg-destructive text-white hover:bg-destructive/90 cursor-pointer"
+              className={styles.destructiveAction}
             >
               Clear All Data
             </AlertDialogAction>

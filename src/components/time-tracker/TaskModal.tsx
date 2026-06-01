@@ -28,6 +28,7 @@ import { parseTimeInput, formatMinutes, getDatesInRange } from "@/lib/time-track
 import { WORK_TYPES, WORK_TYPE_COLORS, DEFAULT_WORK_TYPE } from "@/lib/time-tracker/types";
 import type { TaskFormData, WorkType } from "@/lib/time-tracker/types";
 import type { TimeEntryWithDate } from "@/components/time-tracker/TaskPanel";
+import styles from "./TaskModal.module.css";
 
 interface TaskModalProps {
   open: boolean;
@@ -144,8 +145,8 @@ export default function TaskModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px] max-h-[90vh] flex flex-col">
-        <DialogHeader className="shrink-0">
+      <DialogContent className={styles.dialogContent}>
+        <DialogHeader className={styles.dialogHeader}>
           <DialogTitle>{isEditing ? "Edit Task" : "Track Time"}</DialogTitle>
           <DialogDescription>
             {isEditing
@@ -154,40 +155,43 @@ export default function TaskModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-2 overflow-y-auto flex-1 min-h-0">
+        <div className={styles.formBody}>
           {/* Task Name */}
-          <div className="space-y-2">
+          <div className={styles.formSection}>
             <Label htmlFor="task-name">
-              Task name <span className="text-destructive">*</span>
+              Task name <span className={styles.required}>*</span>
             </Label>
             <Input
               id="task-name"
               placeholder="e.g. Code review, Sprint planning, Bug fix..."
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
-              className={errors.name ? "border-destructive" : ""}
+              className={errors.name ? styles.inputError : undefined}
               autoFocus
             />
             {errors.name && (
-              <p className="text-xs text-destructive">{errors.name}</p>
+              <p className={styles.errorText}>{errors.name}</p>
             )}
           </div>
 
           {/* Work Type */}
-          <div className="space-y-2">
+          <div className={styles.formSection}>
             <Label htmlFor="work-type">Work type</Label>
             <Select
               value={form.type}
               onValueChange={(value) => setForm({ ...form, type: value as WorkType })}
             >
-              <SelectTrigger id="work-type" className="w-full">
+              <SelectTrigger id="work-type" style={{ width: "100%" }}>
                 <SelectValue placeholder="Select type" />
               </SelectTrigger>
               <SelectContent>
                 {WORK_TYPES.map((type) => (
                   <SelectItem key={type} value={type}>
-                    <div className="flex items-center gap-2">
-                      <span className={`h-2.5 w-2.5 rounded-full ${WORK_TYPE_COLORS[type].dot}`} />
+                    <div className={styles.typeSelectItem}>
+                      <span
+                        className={styles.typeDot}
+                        style={{ backgroundColor: WORK_TYPE_COLORS[type].dotColor }}
+                      />
                       {WORK_TYPE_COLORS[type].label}
                     </div>
                   </SelectItem>
@@ -197,7 +201,7 @@ export default function TaskModal({
           </div>
 
           {/* Task Description */}
-          <div className="space-y-2">
+          <div className={styles.formSection}>
             <Label htmlFor="task-desc">Description</Label>
             <Textarea
               id="task-desc"
@@ -205,15 +209,15 @@ export default function TaskModal({
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
               rows={2}
-              className="resize-none"
+              className={styles.textareaNoResize}
             />
           </div>
 
           {/* Task Date */}
-          <div className="space-y-2">
+          <div className={styles.formSection}>
             <Label htmlFor="task-date">Date</Label>
-            <div className="flex items-center gap-2">
-              <CalendarDays className="h-4 w-4 text-muted-foreground shrink-0" />
+            <div className={styles.dateRow}>
+              <CalendarDays style={{ height: "1rem", width: "1rem", color: "var(--muted-foreground)", flexShrink: 0 }} />
               <Input
                 id="task-date"
                 type="date"
@@ -227,7 +231,7 @@ export default function TaskModal({
           <Separator />
 
           {/* Period checkbox */}
-          <div className="flex items-start gap-3">
+          <div className={styles.periodCheck}>
             <Checkbox
               id="period-check"
               checked={form.isPeriod}
@@ -236,11 +240,11 @@ export default function TaskModal({
               }
               disabled={isEditing}
             />
-            <div className="space-y-1">
-              <Label htmlFor="period-check" className="cursor-pointer">
+            <div className={styles.periodLabelArea}>
+              <Label htmlFor="period-check" className={styles.cursorLabel}>
                 Track across a period
               </Label>
-              <p className="text-xs text-muted-foreground">
+              <p className={styles.periodHint}>
                 Add the same time entry to each day in the date range
               </p>
             </div>
@@ -248,11 +252,11 @@ export default function TaskModal({
 
           {/* Period options */}
           {form.isPeriod && (
-            <div className="space-y-3 pl-7 animate-in slide-in-from-top-1 duration-200">
+            <div className={styles.periodOptions}>
               {/* End date */}
-              <div className="space-y-2">
+              <div className={styles.formSection}>
                 <Label htmlFor="period-end">
-                  Period end date <span className="text-destructive">*</span>
+                  Period end date <span className={styles.required}>*</span>
                 </Label>
                 <Input
                   id="period-end"
@@ -260,16 +264,16 @@ export default function TaskModal({
                   value={form.periodEndDate}
                   onChange={(e) => setForm({ ...form, periodEndDate: e.target.value })}
                   min={form.date}
-                  className={errors.periodEndDate ? "border-destructive" : ""}
+                  className={errors.periodEndDate ? styles.inputError : undefined}
                   disabled={isEditing}
                 />
                 {errors.periodEndDate && (
-                  <p className="text-xs text-destructive">{errors.periodEndDate}</p>
+                  <p className={styles.errorText}>{errors.periodEndDate}</p>
                 )}
               </div>
 
               {/* Include non-working days */}
-              <div className="flex items-start gap-3">
+              <div className={styles.periodCheck}>
                 <Checkbox
                   id="nonworking-check"
                   checked={form.includeNonWorkingDays}
@@ -278,11 +282,11 @@ export default function TaskModal({
                   }
                   disabled={isEditing}
                 />
-                <div className="space-y-1">
-                  <Label htmlFor="nonworking-check" className="cursor-pointer">
+                <div className={styles.periodLabelArea}>
+                  <Label htmlFor="nonworking-check" className={styles.cursorLabel}>
                     Include non-working days
                   </Label>
-                  <p className="text-xs text-muted-foreground">
+                  <p className={styles.periodHint}>
                     If unchecked, weekends (Sat &amp; Sun) will be skipped
                   </p>
                 </div>
@@ -290,9 +294,9 @@ export default function TaskModal({
 
               {/* Period preview */}
               {periodPreview && (
-                <Alert>
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription className="text-xs">
+                <Alert className={styles.periodAlert}>
+                  <AlertCircle style={{ height: "1rem", width: "1rem" }} />
+                  <AlertDescription className={styles.periodAlertText}>
                     {periodPreview}
                   </AlertDescription>
                 </Alert>
@@ -303,34 +307,34 @@ export default function TaskModal({
           <Separator />
 
           {/* Spent Time */}
-          <div className="space-y-2">
+          <div className={styles.formSection}>
             <Label htmlFor="spent-time">
-              Spent time <span className="text-destructive">*</span>
+              Spent time <span className={styles.required}>*</span>
             </Label>
-            <div className="flex items-center gap-2">
+            <div className={styles.dateRow}>
               <Input
                 id="spent-time"
                 placeholder='e.g. 30m, 1.5h, .5h, 2h'
                 value={form.spentTime}
                 onChange={(e) => setForm({ ...form, spentTime: e.target.value })}
-                className={errors.spentTime ? "border-destructive" : ""}
+                className={errors.spentTime ? styles.inputError : undefined}
               />
               {timePreview && (
-                <span className="text-sm text-primary font-medium whitespace-nowrap">
+                <span className={styles.timePreview}>
                   = {timePreview}
                 </span>
               )}
             </div>
             {errors.spentTime && (
-              <p className="text-xs text-destructive">{errors.spentTime}</p>
+              <p className={styles.errorText}>{errors.spentTime}</p>
             )}
-            <p className="text-xs text-muted-foreground">
+            <p className={styles.formatHint}>
               Formats: &quot;30m&quot; = 30 min, &quot;1.5h&quot; = 1h 30min, &quot;.5h&quot; = 30 min
             </p>
           </div>
         </div>
 
-        <DialogFooter className="gap-2 sm:gap-0 shrink-0 pt-2 border-t">
+        <DialogFooter className={styles.footer}>
           <Button variant="outline" onClick={handleCancel}>
             Cancel
           </Button>

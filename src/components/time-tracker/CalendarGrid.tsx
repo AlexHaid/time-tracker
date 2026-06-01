@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { formatMinutesShort } from "@/lib/time-tracker/time-parser";
 import { WORK_TYPE_COLORS } from "@/lib/time-tracker/types";
 import type { EntriesByDate, WorkType } from "@/lib/time-tracker/types";
+import styles from "./CalendarGrid.module.css";
 
 interface CalendarGridProps {
   currentMonth: Date;
@@ -35,11 +36,11 @@ const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 /** 8 hours in minutes */
 const EIGHT_HOURS = 480;
 
-/** Color class for spent time based on daily total */
-function getTimeColorClass(totalMinutes: number): string {
-  if (totalMinutes < EIGHT_HOURS) return "text-red-500";
-  if (totalMinutes === EIGHT_HOURS) return "text-green-600";
-  return "text-blue-500";
+/** Get time color style object based on daily total */
+function getTimeColorStyle(totalMinutes: number): { color: string } {
+  if (totalMinutes < EIGHT_HOURS) return { color: "#ef4444" };
+  if (totalMinutes === EIGHT_HOURS) return { color: "#16a34a" };
+  return { color: "#3b82f6" };
 }
 
 export default function CalendarGrid({
@@ -81,37 +82,34 @@ export default function CalendarGrid({
   const handleToday = () => onMonthChange(new Date());
 
   return (
-    <div className="flex flex-col h-full">
+    <div className={styles.root}>
       {/* Header */}
-      <div className="flex items-center justify-between mb-4 px-1">
-        <Button variant="ghost" size="icon" onClick={handlePrevMonth} className="h-8 w-8">
-          <ChevronLeft className="h-4 w-4" />
+      <div className={styles.header}>
+        <Button variant="ghost" size="icon" onClick={handlePrevMonth} style={{ height: "2rem", width: "2rem" }}>
+          <ChevronLeft style={{ height: "1rem", width: "1rem" }} />
         </Button>
-        <div className="flex items-center gap-2">
-          <h2 className="text-lg font-semibold">{format(currentMonth, "MMMM yyyy")}</h2>
-          <Button variant="outline" size="sm" onClick={handleToday} className="h-7 text-xs">
+        <div className={styles.headerTitleGroup}>
+          <h2 className={styles.headerTitle}>{format(currentMonth, "MMMM yyyy")}</h2>
+          <Button variant="outline" size="sm" onClick={handleToday} style={{ height: "1.75rem", fontSize: "0.75rem" }}>
             Today
           </Button>
         </div>
-        <Button variant="ghost" size="icon" onClick={handleNextMonth} className="h-8 w-8">
-          <ChevronRight className="h-4 w-4" />
+        <Button variant="ghost" size="icon" onClick={handleNextMonth} style={{ height: "2rem", width: "2rem" }}>
+          <ChevronRight style={{ height: "1rem", width: "1rem" }} />
         </Button>
       </div>
 
       {/* Weekday headers */}
-      <div className="grid grid-cols-7 mb-1">
+      <div className={styles.weekdayRow}>
         {WEEKDAYS.map((d) => (
-          <div
-            key={d}
-            className="text-center text-xs font-medium text-muted-foreground py-2 select-none"
-          >
+          <div key={d} className={styles.weekdayCell}>
             {d}
           </div>
         ))}
       </div>
 
       {/* Day cells */}
-      <div className="grid grid-cols-7 flex-1 gap-px bg-border rounded-lg overflow-hidden">
+      <div className={styles.dayGrid}>
         {weeks.map((week, wi) =>
           week.map((day, di) => {
             const dateStr = format(day, "yyyy-MM-dd");
@@ -184,17 +182,26 @@ function DayCell({
   const dayOfWeek = day.getDay();
   const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
 
+  // Build day cell class names
+  const dayCellClass = cn(
+    styles.dayCell,
+    !inMonth && styles.dayCellOutOfMonth,
+    isSelected && inMonth && styles.dayCellSelected,
+    isToday && inMonth && styles.dayCellToday,
+    isWeekend && inMonth && !isSelected && styles.dayCellWeekend,
+  );
+
+  // Build day number class names
+  const dayNumClass = cn(
+    styles.dayNum,
+    !inMonth && styles.dayNumOutOfMonth,
+    isToday && inMonth && styles.dayNumToday,
+    isSelected && inMonth && !isToday && styles.dayNumSelected,
+  );
+
   return (
     <div
-      className={cn(
-        "group relative flex flex-col items-center justify-start p-1 min-h-[72px] sm:min-h-[80px] cursor-pointer transition-colors bg-card",
-        "hover:bg-accent/50",
-        !inMonth && "bg-muted/30",
-        isSelected && inMonth && "bg-primary/10 ring-1 ring-primary/30",
-        isToday && inMonth && "bg-accent/30",
-        isWeekend && inMonth && "bg-secondary/20",
-        isWeekend && inMonth && isSelected && "bg-primary/10 ring-1 ring-primary/30"
-      )}
+      className={dayCellClass}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onClick={handleClick}
@@ -209,35 +216,23 @@ function DayCell({
       }}
     >
       {/* Day number */}
-      <span
-        className={cn(
-          "text-sm font-medium leading-none mt-1 select-none",
-          !inMonth && "text-muted-foreground/50",
-          isToday && inMonth && "text-primary font-bold",
-          isSelected && inMonth && !isToday && "text-primary"
-        )}
-      >
+      <span className={dayNumClass}>
         {dayNum}
       </span>
 
       {/* Time summary with colored text and type dots */}
       {totalMinutes > 0 && inMonth && (
-        <div className="mt-1 flex flex-col items-center gap-0.5 w-full px-0.5">
-          <div className={cn(
-            "text-[10px] leading-none font-semibold truncate w-full text-center",
-            getTimeColorClass(totalMinutes)
-          )}>
+        <div className={styles.timeSummary}>
+          <div className={styles.timeText} style={getTimeColorStyle(totalMinutes)}>
             {formatMinutesShort(totalMinutes)}
           </div>
-          <div className="flex gap-0.5 justify-center flex-wrap">
+          <div className={styles.dotsRow}>
             {dayEntries.length <= 4 ? (
               dayEntries.map((entry, i) => (
                 <div
                   key={i}
-                  className={cn(
-                    "h-1.5 w-1.5 rounded-full",
-                    WORK_TYPE_COLORS[entry.type]?.dot || "bg-primary/70"
-                  )}
+                  className={cn(styles.dot, !WORK_TYPE_COLORS[entry.type] && styles.dotFallback)}
+                  style={WORK_TYPE_COLORS[entry.type] ? { backgroundColor: WORK_TYPE_COLORS[entry.type].dotColor } : undefined}
                 />
               ))
             ) : (
@@ -246,13 +241,11 @@ function DayCell({
                 {dayEntries.slice(0, 2).map((entry, i) => (
                   <div
                     key={i}
-                    className={cn(
-                      "h-1.5 w-1.5 rounded-full",
-                      WORK_TYPE_COLORS[entry.type]?.dot || "bg-primary/70"
-                    )}
+                    className={styles.dot}
+                    style={{ backgroundColor: WORK_TYPE_COLORS[entry.type]?.dotColor }}
                   />
                 ))}
-                <span className="text-[8px] leading-none text-muted-foreground font-bold">
+                <span className={styles.overflowCount}>
                   +{dayEntries.length - 2}
                 </span>
               </>
@@ -266,18 +259,10 @@ function DayCell({
         <button
           data-plus-btn
           onClick={handlePlusClick}
-          className={cn(
-            "absolute bottom-1 right-1 z-10",
-            "h-5 w-5 rounded-full",
-            "bg-primary text-primary-foreground",
-            "flex items-center justify-center",
-            "hover:bg-primary/90 transition-all",
-            "shadow-sm",
-            "animate-in fade-in zoom-in-75 duration-150"
-          )}
+          className={styles.plusBtn}
           aria-label={`Add task for ${dateStr}`}
         >
-          <Plus className="h-3 w-3" strokeWidth={2.5} />
+          <Plus style={{ height: "0.75rem", width: "0.75rem" }} strokeWidth={2.5} />
         </button>
       )}
     </div>

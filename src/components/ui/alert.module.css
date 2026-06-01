@@ -1,0 +1,70 @@
+/* Alert CSS Module - migrated from Tailwind */
+
+.base {
+  position: relative;
+  width: 100%;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  display: grid;
+  grid-template-columns: 0 1fr;
+  gap: 0.125rem 0;
+  align-items: start;
+}
+
+.base:has(> svg) {
+  grid-template-columns: calc(0.25rem * 16) 1fr;
+  gap: 0 0.75rem;
+}
+
+.base svg {
+  width: 1rem;
+  height: 1rem;
+  transform: translateY(0.125rem);
+  color: currentColor;
+}
+
+/* Variant: default */
+.variantDefault {
+  background-color: var(--card);
+  color: var(--card-foreground);
+}
+
+/* Variant: destructive */
+.variantDestructive {
+  color: var(--destructive);
+  background-color: var(--card);
+}
+
+.variantDestructive svg {
+  color: currentColor;
+}
+
+.variantDestructive [data-slot="alert-description"] {
+  color: color-mix(in oklch, var(--destructive) 90%, transparent);
+}
+
+.alertTitle {
+  grid-column-start: 2;
+  min-height: 1rem;
+  font-weight: 500;
+  letter-spacing: -0.025em;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+
+.alertDescription {
+  color: var(--muted-foreground);
+  grid-column-start: 2;
+  display: grid;
+  justify-items: start;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.alertDescription p {
+  line-height: 1.625;
+}
