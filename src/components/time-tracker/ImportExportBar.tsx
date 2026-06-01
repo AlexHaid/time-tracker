@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef } from "react";
+import React from "react";
 import { Download, Upload, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,7 +15,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { exportData, importData } from "@/lib/time-tracker/storage";
+import { exportEntries, importEntries, clearAllEntries } from "@/lib/time-tracker/api";
 
 interface ImportExportBarProps {
   onDataChanged: () => void;
@@ -23,85 +23,86 @@ interface ImportExportBarProps {
 
 export default function ImportExportBar({ onDataChanged }: ImportExportBarProps) {
   const { toast } = useToast();
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleExport = () => {
-    const data = exportData();
-    const blob = new Blob([data], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `time-tracker-export-${new Date().toISOString().split("T")[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    toast({ title: "Data exported", description: "Your time tracking data has been downloaded." });
+  const handleExport = async () => {
+    try {
+      const data = await exportEntries();
+      const blob = new Blob([data], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `time-tracker-export-${new Date().toISOString().split("T")[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast({ title: "Data exported", description: "Your time tracking data has been downloaded." });
+    } catch {
+      toast({ title: "Export failed", description: "Could not export your data.", variant: "destructive" });
+    }
   };
 
   const handleImportClick = () => {
-    fileInputRef.current?.click();
-  };
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".json";
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const content = ev.target?.result as string;
-      const success = importData(content);
-      if (success) {
-        toast({
-          title: "Data imported",
-          description: "Your time tracking data has been loaded successfully.",
-        });
-        onDataChanged();
-      } else {
-        toast({
-          title: "Import failed",
-          description: "The file format is invalid. Please check and try again.",
-          variant: "destructive",
-        });
-      }
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        const content = ev.target?.result as string;
+        try {
+          const count = await importEntries(content);
+          toast({
+            title: "Data imported",
+            description: `${count} entr${count !== 1 ? "ies" : "y"} imported successfully.`,
+          });
+          onDataChanged();
+        } catch (err) {
+          toast({
+            title: "Import failed",
+            description: err instanceof Error ? err.message : "The file format is invalid.",
+            variant: "destructive",
+          });
+        }
+      };
+      reader.readAsText(file);
     };
-    reader.readAsText(file);
-    // Reset the input so the same file can be re-imported
-    e.target.value = "";
+    input.click();
   };
 
-  const handleClearAll = () => {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("time-tracker-data");
-      onDataChanged();
+  const handleClearAll = async () => {
+    try {
+      const count = await clearAllEntries();
       toast({
         title: "Data cleared",
-        description: "All time tracking data has been removed.",
+        description: `${count} entr${count !== 1 ? "ies" : "y"} removed.`,
+      });
+      onDataChanged();
+    } catch {
+      toast({
+        title: "Clear failed",
+        description: "Could not clear your data.",
+        variant: "destructive",
       });
     }
   };
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept=".json"
-        onChange={handleFileChange}
-        className="hidden"
-        aria-label="Import data file"
-      />
-      <Button variant="outline" size="sm" onClick={handleImportClick} className="h-8 text-xs gap-1.5">
+      <Button variant="outline" size="sm" onClick={handleImportClick} className="h-8 text-xs gap-1.5 cursor-pointer">
         <Upload className="h-3.5 w-3.5" />
         Import
       </Button>
-      <Button variant="outline" size="sm" onClick={handleExport} className="h-8 text-xs gap-1.5">
+      <Button variant="outline" size="sm" onClick={handleExport} className="h-8 text-xs gap-1.5 cursor-pointer">
         <Download className="h-3.5 w-3.5" />
         Export
       </Button>
       <AlertDialog>
         <AlertDialogTrigger asChild>
-          <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5 text-destructive hover:text-destructive">
+          <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5 text-destructive hover:text-destructive cursor-pointer">
             <Trash2 className="h-3.5 w-3.5" />
             Clear All
           </Button>
@@ -115,10 +116,10 @@ export default function ImportExportBar({ onDataChanged }: ImportExportBarProps)
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel className="cursor-pointer">Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleClearAll}
-              className="bg-destructive text-white hover:bg-destructive/90"
+              className="bg-destructive text-white hover:bg-destructive/90 cursor-pointer"
             >
               Clear All Data
             </AlertDialogAction>

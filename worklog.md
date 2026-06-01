@@ -64,3 +64,43 @@ Stage Summary:
 - Calendar spent time colored by daily total: red (<8h), green (=8h), blue (>8h)
 - Task panel shows colored type badge for each entry
 - Auto-migration V2→V3 adds `type: "development"` to existing entries
+
+---
+Task ID: 4
+Agent: Main
+Task: Add backend with database persistence, CRUD API routes, and authentication
+
+Work Log:
+- Updated Prisma schema: replaced Post model with TimeEntry model (id, name, description, date, spentMinutes, type, userId); User model gained passwordHash field and entries relation
+- Ran db:push to sync schema with SQLite database
+- Installed bcryptjs + @types/bcryptjs for password hashing
+- Added NEXTAUTH_SECRET and NEXTAUTH_URL to .env
+- Created src/lib/auth.ts: NextAuth config with CredentialsProvider, JWT strategy, session callback with user.id
+- Created src/app/api/auth/[...nextauth]/route.ts: NextAuth API handler
+- Created src/app/api/auth/register/route.ts: POST registration endpoint with password hashing, duplicate email check
+- Created src/lib/api-auth.ts: getAuthUserId() helper using getServerSession
+- Created src/app/api/entries/route.ts: GET (all entries, optional month filter, grouped by date) and POST (create one or more entries in transaction)
+- Created src/app/api/entries/[id]/route.ts: GET, PUT, DELETE for single entry with ownership verification
+- Created src/app/api/entries/export/route.ts: GET export all entries as JSON
+- Created src/app/api/entries/import/route.ts: POST import entries from JSON with validation
+- Created src/app/api/entries/clear/route.ts: DELETE all entries for authenticated user
+- Created src/lib/time-tracker/api.ts: client-side API module with fetchEntries, createEntries, updateEntryAPI, deleteEntryAPI, exportEntries, importEntries, clearAllEntries
+- Created src/components/auth/AuthProvider.tsx: SessionProvider wrapper for client components
+- Created src/components/auth/AuthForm.tsx: login/register form with tabs, error handling, auto-login after registration
+- Created src/components/auth/UserMenu.tsx: dropdown menu with user info and sign out
+- Created src/types/next-auth.d.ts: extended NextAuth types with user.id on Session and JWT
+- Updated src/app/layout.tsx: wrapped children with AuthProvider
+- Updated src/app/page.tsx: checks session status; shows AuthForm when unauthenticated, full app when authenticated; all CRUD operations now call API instead of localStorage; loading state while checking session
+- Updated src/components/time-tracker/ImportExportBar.tsx: replaced localStorage calls with API calls (exportEntries, importEntries, clearAllEntries)
+- All API routes verify authentication before performing operations
+- Lint passes clean; dev server compiles without errors
+- Tested: registration creates user in DB, unauthenticated API calls return 401, session endpoint works
+
+Stage Summary:
+- Full backend with Prisma/SQLite database persistence
+- NextAuth.js authentication with credentials provider (email + password)
+- Registration and login flow with auto-login after registration
+- All CRUD API routes protected by authentication (user can only access their own data)
+- Frontend conditionally renders auth form or main app based on session
+- Data now synced across devices via server-side database
+- UserMenu component in header with sign out functionality
