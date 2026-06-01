@@ -110,16 +110,12 @@
 /* Dialog footer override */
 .footer {
   display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
   gap: 0.5rem;
   flex-shrink: 0;
   padding-top: 0.5rem;
   border-top: 1px solid var(--border);
-}
-
-@media (min-width: 640px) {
-  .footer {
-    gap: 0;
-  }
 }
 
 /* Dialog content overrides */

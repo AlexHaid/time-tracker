@@ -94,15 +94,9 @@
 
 .footer {
   display: flex;
-  flex-direction: column-reverse;
+  flex-direction: row;
+  justify-content: flex-end;
   gap: 0.5rem;
-}
-
-@media (min-width: 640px) {
-  .footer {
-    flex-direction: row;
-    justify-content: flex-end;
-  }
 }
 
 .title {
