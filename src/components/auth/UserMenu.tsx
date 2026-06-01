@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, User } from "lucide-react";
+import { LogOut } from "lucide-react";
 
 export default function UserMenu() {
   const { data: session } = useSession();
@@ -45,7 +45,13 @@ export default function UserMenu() {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => signOut({ redirect: false })} className="text-destructive cursor-pointer">
+        <DropdownMenuItem
+          onClick={async () => {
+            await signOut({ redirect: false });
+            window.location.href = window.location.origin + "/";
+          }}
+          className="text-destructive cursor-pointer"
+        >
           <LogOut className="h-4 w-4 mr-2" />
           Sign Out
         </DropdownMenuItem>

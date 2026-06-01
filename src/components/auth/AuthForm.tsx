@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import { signIn } from "next-auth/react";
-import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,14 +11,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Timer, AlertCircle, Loader2 } from "lucide-react";
 
 export default function AuthForm() {
-  const searchParams = useSearchParams();
-  const hasAuthError = searchParams.get("auth_error") === "1";
   const [mode, setMode] = useState<"login" | "register">("login");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
-  // Combine URL error with form error
-  const displayError = error || (hasAuthError ? "Invalid email or password" : "");
 
   // Login fields
   const [loginEmail, setLoginEmail] = useState("");
@@ -31,19 +25,31 @@ export default function AuthForm() {
   const [regPassword, setRegPassword] = useState("");
   const [regConfirmPassword, setRegConfirmPassword] = useState("");
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
-    // Use NextAuth's natural redirect flow (no redirect: false)
-    // This makes a full-page form submission so the session cookie
-    // is properly set by the browser before the page loads
-    signIn("credentials", {
-      email: loginEmail,
-      password: loginPassword,
-      callbackUrl: "/",
-    });
+    try {
+      const result = await signIn("credentials", {
+        email: loginEmail,
+        password: loginPassword,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setError("Invalid email or password");
+        setLoading(false);
+        return;
+      }
+
+      // Sign-in succeeded — the session cookie is now set.
+      // Navigate using the current origin (proxy URL), not localhost:3000.
+      window.location.href = window.location.origin + "/";
+    } catch {
+      setError("An unexpected error occurred");
+      setLoading(false);
+    }
   };
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -81,12 +87,22 @@ export default function AuthForm() {
         return;
       }
 
-      // Auto sign in after registration using NextAuth's natural redirect
-      signIn("credentials", {
+      // Auto sign in after registration
+      const result = await signIn("credentials", {
         email: regEmail,
         password: regPassword,
-        callbackUrl: "/",
+        redirect: false,
       });
+
+      if (result?.error) {
+        setError("Account created! Please sign in manually.");
+        setMode("login");
+        setLoading(false);
+        return;
+      }
+
+      // Navigate using the current origin (proxy URL)
+      window.location.href = window.location.origin + "/";
     } catch {
       setError("An unexpected error occurred");
       setLoading(false);
@@ -117,10 +133,10 @@ export default function AuthForm() {
             </Tabs>
           </CardHeader>
           <CardContent>
-            {displayError && (
+            {error && (
               <Alert variant="destructive" className="mb-4">
                 <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{displayError}</AlertDescription>
+                <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
 
