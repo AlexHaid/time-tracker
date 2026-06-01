@@ -24,9 +24,9 @@ interface ImportExportBarProps {
 export default function ImportExportBar({ onDataChanged }: ImportExportBarProps) {
   const { toast } = useToast();
 
-  const handleExport = async () => {
+  const handleExport = () => {
     try {
-      const data = await exportEntries();
+      const data = exportEntries();
       const blob = new Blob([data], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -46,15 +46,15 @@ export default function ImportExportBar({ onDataChanged }: ImportExportBarProps)
     const input = document.createElement("input");
     input.type = "file";
     input.accept = ".json";
-    input.onchange = async (e) => {
+    input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (!file) return;
 
       const reader = new FileReader();
-      reader.onload = async (ev) => {
+      reader.onload = (ev) => {
         const content = ev.target?.result as string;
         try {
-          const count = await importEntries(content);
+          const count = importEntries(content);
           toast({
             title: "Data imported",
             description: `${count} entr${count !== 1 ? "ies" : "y"} imported successfully.`,
@@ -73,9 +73,9 @@ export default function ImportExportBar({ onDataChanged }: ImportExportBarProps)
     input.click();
   };
 
-  const handleClearAll = async () => {
+  const handleClearAll = () => {
     try {
-      const count = await clearAllEntries();
+      const count = clearAllEntries();
       toast({
         title: "Data cleared",
         description: `${count} entr${count !== 1 ? "ies" : "y"} removed.`,

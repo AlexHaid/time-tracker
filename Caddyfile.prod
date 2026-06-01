@@ -4,17 +4,23 @@
 # Replace "your-domain.com" with your actual domain.
 # Caddy will automatically provision HTTPS via Let's Encrypt.
 #
-# Usage:
-#   1. Copy this file: cp Caddyfile.prod Caddyfile
-#   2. Replace "your-domain.com" with your domain
-#   3. Start Caddy: caddy run
+# 1. Upload ./out/ to /var/www/time-tracker/
+# 2. Copy this file: cp Caddyfile.prod /etc/caddy/Caddyfile
+# 3. Replace "your-domain.com" with your domain
+# 4. Start Caddy: sudo systemctl restart caddy
 
 your-domain.com {
-    reverse_proxy localhost:3000 {
-        header_up Host {host}
-        header_up X-Forwarded-Host {host}
-        header_up X-Forwarded-For {remote_host}
-        header_up X-Forwarded-Proto {scheme}
-        header_up X-Real-IP {remote_host}
-    }
+	root * /var/www/time-tracker
+	file_server
+
+	# SPA fallback: serve index.html for all non-file routes
+	try_files {path} /index.html
+
+	# Cache static assets
+	@static path *.js *.css *.svg *.png *.jpg *.woff2
+	header @static Cache-Control "public, max-age=31536000, immutable"
+
+	# Don't cache index.html
+	@html path /index.html
+	header @html Cache-Control "no-cache, no-store, must-revalidate"
 }

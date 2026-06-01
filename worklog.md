@@ -3,35 +3,28 @@
 ---
 Task ID: 1
 Agent: Main Agent
-Task: Prepare Time Tracker app for production deployment
+Task: Roll back to client-side only app — remove backend, auth, Prisma, DB
 
 Work Log:
-- Audited entire project: identified 18 issues (5 critical, 6 high, 7 medium)
-- Fixed `src/lib/db.ts`: disabled Prisma query logging in production (was `log: ['query']` always, now dev-only)
-- Fixed `next.config.ts`: removed `ignoreBuildErrors: true`, enabled `reactStrictMode`, added `poweredByHeader: false`
-- Fixed `src/app/layout.tsx`: removed Z.ai branding from metadata, fixed icons to use local `/logo.svg`
-- Fixed `src/lib/auth.ts`: extended `NextAuthOptions` type to include `trustHost` (fixes TS build error)
-- Fixed `src/app/api/auth/login/route.ts`: added rate limiting (10 attempts/15min per IP), added `secure` flag for production cookies
-- Fixed `src/app/api/auth/logout/route.ts`: added `secure` flag for production cookies
-- Replaced `src/app/api/route.ts`: proper health check with DB connectivity test
-- Created `src/lib/rate-limit.ts`: in-memory rate limiter for login brute-force protection
-- Created `Dockerfile`: multi-stage build (Bun for build, Node.js 22 Alpine for runtime)
-- Created `.dockerignore`: excludes node_modules, .next, .env, db, examples, skills, etc.
-- Created `docker-compose.yml`: production setup with persistent volume for SQLite
-- Created `.env.example`: template with documentation for all env vars
-- Updated `.env`: changed DATABASE_URL from absolute to relative path
-- Updated `.gitignore`: properly excludes .env, db files, skills, examples, logs
-- Updated `tsconfig.json`: excluded examples/, mini-services/, skills/ from build
-- Created `start.sh`: production start script with env validation
-- Created `Caddyfile.prod`: production HTTPS config template
-- Created `DEPLOY.md`: comprehensive deployment guide with Docker, VPS, systemd, RU hosting options
-- Verified: lint passes, build succeeds, dev server runs, health check works
+- Removed all backend code: API routes (src/app/api/), auth components (src/components/auth/), Prisma schema, SQLite DB
+- Removed server-side libs: auth.ts, api-auth.ts, db.ts, rate-limit.ts
+- Rewrote src/lib/time-tracker/api.ts to use localStorage instead of fetch calls (sync instead of async)
+- Rewrote src/app/page.tsx: removed all auth/session logic, uses localStorage directly, sync operations
+- Rewrote src/components/time-tracker/ImportExportBar.tsx: sync localStorage operations instead of async fetch
+- Rewrote src/app/layout.tsx: removed AuthProvider, removed next-auth dependency
+- Changed next.config.ts: output from "standalone" to "export" (pure static HTML/CSS/JS)
+- Cleaned package.json: removed 50 unused dependencies (next-auth, prisma, bcryptjs, z-ai-web-dev-sdk, etc.)
+- Updated Dockerfile: multi-stage build with Caddy to serve static files
+- Updated docker-compose.yml: simplified, no volumes needed
+- Updated Caddyfile: static file server with SPA fallback
+- Updated Caddyfile.prod: HTTPS with caching headers for static assets
+- Updated DEPLOY.md: complete rewrite for static hosting architecture
+- Updated start.sh: static build guide
+- Verified: lint passes, build succeeds, 1.4MB static output in ./out/
 
 Stage Summary:
-- All production-critical issues resolved
-- Build produces standalone output (~7.6s compile time)
-- Docker deployment ready (build + compose)
-- Rate limiting on login endpoint
-- Proper cookie security flags for production
-- Health check endpoint with DB connectivity test
-- Deployment guide with RU-region hosting recommendations
+- App is now fully client-side — no server, no database, no auth
+- Data stored in browser localStorage with import/export for backups
+- Static files can be served by any web server (Caddy, Nginx, Python http.server)
+- 1.4MB total output, zero runtime dependencies
+- Deployment: just copy ./out/ to a web server root

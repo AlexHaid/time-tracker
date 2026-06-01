@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { useSession } from "next-auth/react";
+import React, { useCallback, useMemo, useState } from "react";
 import { parseISO } from "date-fns";
 import { Clock, Timer } from "lucide-react";
 import CalendarGrid from "@/components/time-tracker/CalendarGrid";
@@ -9,8 +8,6 @@ import TaskPanel from "@/components/time-tracker/TaskPanel";
 import TaskModal from "@/components/time-tracker/TaskModal";
 import DeleteConfirmDialog from "@/components/time-tracker/DeleteConfirmDialog";
 import ImportExportBar from "@/components/time-tracker/ImportExportBar";
-import AuthForm from "@/components/auth/AuthForm";
-import UserMenu from "@/components/auth/UserMenu";
 import {
   fetchEntries,
   createEntries,
@@ -28,18 +25,12 @@ function getTodayString(): string {
 }
 
 export default function TimeTrackerPage() {
-  const { data: session, status } = useSession();
-  const isAuthenticated = status === "authenticated";
-  const isLoading = status === "loading";
-
   // Current month displayed in calendar
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   // Selected date (YYYY-MM-DD)
   const [selectedDate, setSelectedDate] = useState<string>(getTodayString);
   // All entries grouped by date
-  const [entriesByDate, setEntriesByDate] = useState<EntriesByDate>({});
-  // Whether data has been loaded
-  const [hydrated, setHydrated] = useState(false);
+  const [entriesByDate, setEntriesByDate] = useState<EntriesByDate>(() => fetchEntries());
   // Task modal state
   const [taskModalOpen, setTaskModalOpen] = useState(false);
   const [taskModalDate, setTaskModalDate] = useState<string>("");
@@ -50,27 +41,10 @@ export default function TimeTrackerPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingEntry, setDeletingEntry] = useState<(TimeEntry & { date: string }) | null>(null);
 
-  // Refresh entries from API
-  const refreshEntries = useCallback(async () => {
-    try {
-      const data = await fetchEntries();
-      setEntriesByDate(data);
-      setHydrated(true);
-    } catch (err) {
-      console.error("Failed to fetch entries:", err);
-      setHydrated(true);
-    }
+  // Refresh entries from localStorage
+  const refreshEntries = useCallback(() => {
+    setEntriesByDate(fetchEntries());
   }, []);
-
-  // Load entries when authenticated
-  useEffect(() => {
-    if (isAuthenticated) {
-      refreshEntries();
-    } else {
-      setEntriesByDate({});
-      setHydrated(false);
-    }
-  }, [isAuthenticated, refreshEntries]);
 
   // Get entries for the selected date
   const selectedDateEntries = useMemo(() => {
@@ -132,67 +106,59 @@ export default function TimeTrackerPage() {
   };
 
   // Handler: confirm delete
-  const handleConfirmDelete = async () => {
+  const handleConfirmDelete = () => {
     if (deletingEntry) {
-      try {
-        await deleteEntryAPI(deletingEntry.id);
-        await refreshEntries();
-      } catch (err) {
-        console.error("Failed to delete entry:", err);
-      }
+      deleteEntryAPI(deletingEntry.id, deletingEntry.date);
+      refreshEntries();
     }
     setDeleteDialogOpen(false);
     setDeletingEntry(null);
   };
 
   // Handler: submit task form
-  const handleSubmitTask = async (data: TaskFormData) => {
+  const handleSubmitTask = (data: TaskFormData) => {
     const minutes = parseTimeInput(data.spentTime);
     if (!minutes || minutes <= 0) return;
 
-    try {
-      if (editingEntry) {
-        // Update existing entry
-        await updateEntryAPI(editingEntry.id, {
+    if (editingEntry) {
+      // Update existing entry
+      updateEntryAPI(editingEntry.id, editingEntry.date, {
+        name: data.name.trim(),
+        description: data.description.trim(),
+        date: data.date,
+        type: data.type,
+        spentMinutes: minutes,
+      });
+    } else {
+      // Create new entry(s)
+      if (data.isPeriod && data.periodEndDate) {
+        const dates = getDatesInRange(
+          data.date,
+          data.periodEndDate,
+          data.includeNonWorkingDays
+        );
+        const newEntries = dates.map((d) => ({
           name: data.name.trim(),
           description: data.description.trim(),
-          date: data.date,
-          type: data.type,
+          date: d,
           spentMinutes: minutes,
-        });
+          type: data.type,
+        }));
+        createEntries(newEntries);
       } else {
-        // Create new entry(s)
-        if (data.isPeriod && data.periodEndDate) {
-          const dates = getDatesInRange(
-            data.date,
-            data.periodEndDate,
-            data.includeNonWorkingDays
-          );
-          const newEntries = dates.map((d) => ({
+        createEntries([
+          {
             name: data.name.trim(),
             description: data.description.trim(),
-            date: d,
+            date: data.date,
             spentMinutes: minutes,
             type: data.type,
-          }));
-          await createEntries(newEntries);
-        } else {
-          await createEntries([
-            {
-              name: data.name.trim(),
-              description: data.description.trim(),
-              date: data.date,
-              spentMinutes: minutes,
-              type: data.type,
-            },
-          ]);
-        }
+          },
+        ]);
       }
-
-      await refreshEntries();
-    } catch (err) {
-      console.error("Failed to save entry:", err);
     }
+
+    refreshEntries();
   };
 
   // Format minutes display
@@ -203,23 +169,6 @@ export default function TimeTrackerPage() {
     if (m === 0) return `${h}h`;
     return `${h}h ${m}m`;
   };
-
-  // Show loading state while checking session
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="flex items-center gap-3">
-          <Timer className="h-6 w-6 animate-pulse text-primary" />
-          <span className="text-muted-foreground">Loading...</span>
-        </div>
-      </div>
-    );
-  }
-
-  // Show auth form if not authenticated
-  if (!isAuthenticated) {
-    return <AuthForm />;
-  }
 
   return (
     <div className="min-h-screen flex flex-col bg-background" suppressHydrationWarning>
@@ -243,11 +192,10 @@ export default function TimeTrackerPage() {
               <Clock className="h-4 w-4 text-muted-foreground" />
               <span className="text-muted-foreground">This month:</span>
               <span className="font-semibold" suppressHydrationWarning>
-                {hydrated ? formatTotal(monthTotalMinutes) : "0m"}
+                {formatTotal(monthTotalMinutes)}
               </span>
             </div>
             <ImportExportBar onDataChanged={refreshEntries} />
-            <UserMenu />
           </div>
         </div>
       </header>
@@ -282,8 +230,8 @@ export default function TimeTrackerPage() {
       {/* Footer */}
       <footer className="border-t bg-card mt-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between text-xs text-muted-foreground">
-          <span>Time Tracker &mdash; Data synced across all your devices</span>
-          {hydrated && selectedDate && selectedDateEntries.length > 0 && (
+          <span>Time Tracker &mdash; Data stored locally in your browser</span>
+          {selectedDate && selectedDateEntries.length > 0 && (
             <span>
               Selected day total: <strong className="text-foreground">{formatTotal(selectedDateTotalMinutes)}</strong>
             </span>

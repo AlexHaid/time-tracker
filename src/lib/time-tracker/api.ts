@@ -1,19 +1,27 @@
+/**
+ * Client-side data layer using localStorage.
+ * All operations are synchronous and instant.
+ * Import/export works with the same JSON format as before.
+ */
 import type { EntriesByDate, WorkType } from "./types";
+import {
+  loadData,
+  saveData,
+  addEntries,
+  updateEntry,
+  deleteEntry,
+  generateId,
+  exportData,
+  importData,
+} from "./storage";
 
-/** Fetch all entries from the backend, optionally filtered by month */
-export async function fetchEntries(month?: string): Promise<EntriesByDate> {
-  const params = month ? `?month=${month}` : "";
-  const res = await fetch(`/api/entries${params}`);
-  if (!res.ok) {
-    if (res.status === 401) throw new Error("Unauthorized");
-    throw new Error("Failed to fetch entries");
-  }
-  const data = await res.json();
-  return data.entries as EntriesByDate;
+/** Fetch all entries from localStorage */
+export function fetchEntries(): EntriesByDate {
+  return loadData().entries;
 }
 
 /** Create one or more entries */
-export async function createEntries(
+export function createEntries(
   entries: Array<{
     name: string;
     description: string;
@@ -21,21 +29,24 @@ export async function createEntries(
     spentMinutes: number;
     type: WorkType;
   }>
-): Promise<void> {
-  const res = await fetch("/api/entries", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ entries }),
-  });
-  if (!res.ok) {
-    if (res.status === 401) throw new Error("Unauthorized");
-    throw new Error("Failed to create entries");
-  }
+): void {
+  const wrapped = entries.map((e) => ({
+    date: e.date,
+    entry: {
+      id: generateId(),
+      name: e.name,
+      description: e.description,
+      spentMinutes: e.spentMinutes,
+      type: e.type,
+    },
+  }));
+  addEntries(wrapped);
 }
 
 /** Update an entry */
-export async function updateEntryAPI(
+export function updateEntryAPI(
   id: string,
+  oldDate: string,
   updates: {
     name?: string;
     description?: string;
@@ -43,66 +54,38 @@ export async function updateEntryAPI(
     spentMinutes?: number;
     type?: WorkType;
   }
-): Promise<void> {
-  const res = await fetch(`/api/entries/${id}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(updates),
-  });
-  if (!res.ok) {
-    if (res.status === 401) throw new Error("Unauthorized");
-    throw new Error("Failed to update entry");
-  }
+): void {
+  updateEntry(id, oldDate, updates);
 }
 
 /** Delete an entry */
-export async function deleteEntryAPI(id: string): Promise<void> {
-  const res = await fetch(`/api/entries/${id}`, {
-    method: "DELETE",
-  });
-  if (!res.ok) {
-    if (res.status === 401) throw new Error("Unauthorized");
-    throw new Error("Failed to delete entry");
-  }
+export function deleteEntryAPI(id: string, date: string): void {
+  deleteEntry(date, id);
 }
 
 /** Export all entries as JSON string */
-export async function exportEntries(): Promise<string> {
-  const res = await fetch("/api/entries/export");
-  if (!res.ok) {
-    if (res.status === 401) throw new Error("Unauthorized");
-    throw new Error("Failed to export entries");
-  }
-  const data = await res.json();
-  return JSON.stringify(data, null, 2);
+export function exportEntries(): string {
+  return exportData();
 }
 
-/** Import entries from JSON string */
-export async function importEntries(jsonString: string): Promise<number> {
-  const data = JSON.parse(jsonString);
-  const res = await fetch("/api/entries/import", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
-  if (!res.ok) {
-    if (res.status === 401) throw new Error("Unauthorized");
-    const errorData = await res.json();
-    throw new Error(errorData.error || "Failed to import entries");
-  }
-  const result = await res.json();
-  return result.imported;
+/** Import entries from JSON string. Returns number of entries imported. */
+export function importEntries(jsonString: string): number {
+  const before = loadData().entries;
+  const beforeCount = Object.values(before).reduce((s, l) => s + l.length, 0);
+
+  const success = importData(jsonString);
+  if (!success) throw new Error("Invalid import file format");
+
+  const after = loadData().entries;
+  const afterCount = Object.values(after).reduce((s, l) => s + l.length, 0);
+
+  return afterCount - beforeCount;
 }
 
-/** Clear all entries */
-export async function clearAllEntries(): Promise<number> {
-  const res = await fetch("/api/entries/clear", {
-    method: "DELETE",
-  });
-  if (!res.ok) {
-    if (res.status === 401) throw new Error("Unauthorized");
-    throw new Error("Failed to clear entries");
-  }
-  const result = await res.json();
-  return result.deleted;
+/** Clear all entries. Returns number of entries deleted. */
+export function clearAllEntries(): number {
+  const data = loadData();
+  const count = Object.values(data.entries).reduce((s, l) => s + l.length, 0);
+  saveData({ entries: {}, version: data.version });
+  return count;
 }
