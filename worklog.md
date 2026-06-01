@@ -43,3 +43,24 @@ Stage Summary:
 - `date` field removed from individual TimeEntry objects (now the object key)
 - Auto-migration from V1 format ensures backward compatibility
 - Import supports both V1 (flat array) and V2 (date-keyed) formats
+
+---
+Task ID: 3
+Agent: Main
+Task: Add work type feature (development/meeting) with colored calendar and time thresholds
+
+Work Log:
+- Updated types.ts: added WorkType union type, WORK_TYPES array, WORK_TYPE_COLORS mapping, DEFAULT_WORK_TYPE; added `type` field to TimeEntry and TaskFormData; bumped version to 3
+- Updated storage.ts: added V2→V3 migration (adds `type: "development"` to existing entries); import supports V1, V2, and V3 formats
+- Updated TaskModal.tsx: added Select dropdown for work type with colored dot indicators; form initializes with entry's type on edit
+- Updated CalendarGrid.tsx: dots colored by work type (emerald=development, amber=meeting); spent time text colored by threshold (red < 8h, green = 8h, blue > 8h); passes dayEntries array to DayCell for per-entry type dots
+- Updated TaskPanel.tsx: each task item shows colored type badge (Development/Meeting) and colored dot indicator
+- Updated page.tsx: passes `type: data.type` in all entry creation/update paths
+- All lint checks pass; browser testing confirmed: red/green/blue time colors, emerald/amber type dots, type badges in panel, edit dropdown preserves type, V2 migration works
+
+Stage Summary:
+- Work type dropdown: Development (default) and Meeting
+- Calendar dots colored by type: emerald for development, amber for meeting
+- Calendar spent time colored by daily total: red (<8h), green (=8h), blue (>8h)
+- Task panel shows colored type badge for each entry
+- Auto-migration V2→V3 adds `type: "development"` to existing entries

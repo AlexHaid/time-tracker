@@ -10,7 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { formatMinutes } from "@/lib/time-tracker/time-parser";
-import type { TimeEntry } from "@/lib/time-tracker/types";
+import { WORK_TYPE_COLORS } from "@/lib/time-tracker/types";
+import type { TimeEntry, WorkType } from "@/lib/time-tracker/types";
 
 /** TimeEntry augmented with date context (date comes from the key in EntriesByDate) */
 export type TimeEntryWithDate = TimeEntry & { date: string };
@@ -107,6 +108,8 @@ interface TaskItemProps {
 }
 
 function TaskItem({ entry, onEdit, onDelete }: TaskItemProps) {
+  const typeInfo = WORK_TYPE_COLORS[entry.type || "development"];
+
   return (
     <div
       className={cn(
@@ -114,9 +117,18 @@ function TaskItem({ entry, onEdit, onDelete }: TaskItemProps) {
         "bg-card hover:bg-accent/30 transition-colors"
       )}
     >
+      {/* Type color indicator */}
+      <div className={cn("mt-1 h-2.5 w-2.5 rounded-full shrink-0", typeInfo.dot)} />
+
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <h4 className="text-sm font-medium truncate">{entry.name}</h4>
+          <Badge
+            variant="outline"
+            className={cn("text-[10px] px-1.5 py-0 h-4 shrink-0", typeInfo.badge)}
+          >
+            {typeInfo.label}
+          </Badge>
         </div>
         {entry.description && (
           <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
@@ -125,7 +137,7 @@ function TaskItem({ entry, onEdit, onDelete }: TaskItemProps) {
         )}
         <div className="flex items-center gap-1.5 mt-1.5">
           <Clock className="h-3 w-3 text-muted-foreground" />
-          <span className="text-xs font-medium text-primary">
+          <span className={cn("text-xs font-medium", typeInfo.badgeText)}>
             {formatMinutes(entry.spentMinutes)}
           </span>
         </div>

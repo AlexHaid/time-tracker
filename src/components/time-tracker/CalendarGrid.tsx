@@ -17,7 +17,8 @@ import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { formatMinutesShort } from "@/lib/time-tracker/time-parser";
-import type { EntriesByDate } from "@/lib/time-tracker/types";
+import { WORK_TYPE_COLORS } from "@/lib/time-tracker/types";
+import type { EntriesByDate, WorkType } from "@/lib/time-tracker/types";
 
 interface CalendarGridProps {
   currentMonth: Date;
@@ -29,6 +30,16 @@ interface CalendarGridProps {
 }
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+/** 8 hours in minutes */
+const EIGHT_HOURS = 480;
+
+/** Color class for spent time based on daily total */
+function getTimeColorClass(totalMinutes: number): string {
+  if (totalMinutes < EIGHT_HOURS) return "text-red-500";
+  if (totalMinutes === EIGHT_HOURS) return "text-green-600";
+  return "text-blue-500";
+}
 
 export default function CalendarGrid({
   currentMonth,
@@ -117,7 +128,7 @@ export default function CalendarGrid({
                 isSelected={isSelected}
                 isToday={today}
                 totalMinutes={totalMinutes}
-                entryCount={dayEntries.length}
+                dayEntries={dayEntries}
                 onSelect={() => onDateSelect(dateStr)}
                 onAdd={() => onAddTask(dateStr)}
               />
@@ -136,7 +147,7 @@ interface DayCellProps {
   isSelected: boolean;
   isToday: boolean;
   totalMinutes: number;
-  entryCount: number;
+  dayEntries: { type: WorkType; spentMinutes: number }[];
   onSelect: () => void;
   onAdd: () => void;
 }
@@ -148,7 +159,7 @@ function DayCell({
   isSelected,
   isToday,
   totalMinutes,
-  entryCount,
+  dayEntries,
   onSelect,
   onAdd,
 }: DayCellProps) {
@@ -187,7 +198,7 @@ function DayCell({
       onClick={handleClick}
       role="button"
       tabIndex={0}
-      aria-label={`Date ${dateStr}, ${entryCount} task${entryCount !== 1 ? "s" : ""}, ${totalMinutes > 0 ? formatMinutesShort(totalMinutes) : "no time tracked"}`}
+      aria-label={`Date ${dateStr}, ${dayEntries.length} task${dayEntries.length !== 1 ? "s" : ""}, ${totalMinutes > 0 ? formatMinutesShort(totalMinutes) : "no time tracked"}`}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
@@ -207,26 +218,40 @@ function DayCell({
         {dayNum}
       </span>
 
-      {/* Time summary dot/bar */}
+      {/* Time summary with colored text and type dots */}
       {totalMinutes > 0 && inMonth && (
         <div className="mt-1 flex flex-col items-center gap-0.5 w-full px-0.5">
-          <div className="text-[10px] leading-none text-muted-foreground font-medium truncate w-full text-center">
+          <div className={cn(
+            "text-[10px] leading-none font-semibold truncate w-full text-center",
+            getTimeColorClass(totalMinutes)
+          )}>
             {formatMinutesShort(totalMinutes)}
           </div>
-          <div className="flex gap-0.5 justify-center">
-            {entryCount <= 3 ? (
-              Array.from({ length: entryCount }).map((_, i) => (
+          <div className="flex gap-0.5 justify-center flex-wrap">
+            {dayEntries.length <= 4 ? (
+              dayEntries.map((entry, i) => (
                 <div
                   key={i}
-                  className="h-1.5 w-1.5 rounded-full bg-primary/70"
+                  className={cn(
+                    "h-1.5 w-1.5 rounded-full",
+                    WORK_TYPE_COLORS[entry.type]?.dot || "bg-primary/70"
+                  )}
                 />
               ))
             ) : (
               <>
-                <div className="h-1.5 w-1.5 rounded-full bg-primary/70" />
-                <div className="h-1.5 w-1.5 rounded-full bg-primary/70" />
-                <span className="text-[8px] leading-none text-primary/70 font-bold">
-                  +{entryCount - 2}
+                {/* Show first 2 dots + count for many entries */}
+                {dayEntries.slice(0, 2).map((entry, i) => (
+                  <div
+                    key={i}
+                    className={cn(
+                      "h-1.5 w-1.5 rounded-full",
+                      WORK_TYPE_COLORS[entry.type]?.dot || "bg-primary/70"
+                    )}
+                  />
+                ))}
+                <span className="text-[8px] leading-none text-muted-foreground font-bold">
+                  +{dayEntries.length - 2}
                 </span>
               </>
             )}

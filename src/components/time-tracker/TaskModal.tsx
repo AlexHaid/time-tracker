@@ -16,9 +16,17 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { CalendarDays, AlertCircle } from "lucide-react";
 import { parseTimeInput, formatMinutes, getDatesInRange } from "@/lib/time-tracker/time-parser";
-import type { TaskFormData } from "@/lib/time-tracker/types";
+import { WORK_TYPES, WORK_TYPE_COLORS, DEFAULT_WORK_TYPE } from "@/lib/time-tracker/types";
+import type { TaskFormData, WorkType } from "@/lib/time-tracker/types";
 import type { TimeEntryWithDate } from "@/components/time-tracker/TaskPanel";
 
 interface TaskModalProps {
@@ -33,6 +41,7 @@ const emptyForm: TaskFormData = {
   name: "",
   description: "",
   date: "",
+  type: DEFAULT_WORK_TYPE,
   spentTime: "",
   isPeriod: false,
   periodEndDate: "",
@@ -45,6 +54,7 @@ function getInitialForm(date: string, editingEntry: TimeEntryWithDate | null): T
       name: editingEntry.name,
       description: editingEntry.description,
       date: editingEntry.date,
+      type: editingEntry.type || DEFAULT_WORK_TYPE,
       spentTime: minutesToTimeString(editingEntry.spentMinutes),
       isPeriod: false,
       periodEndDate: "",
@@ -152,7 +162,7 @@ export default function TaskModal({
             </Label>
             <Input
               id="task-name"
-              placeholder="e.g. Code review, Meeting, Development..."
+              placeholder="e.g. Code review, Sprint planning, Bug fix..."
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               className={errors.name ? "border-destructive" : ""}
@@ -161,6 +171,32 @@ export default function TaskModal({
             {errors.name && (
               <p className="text-xs text-destructive">{errors.name}</p>
             )}
+          </div>
+
+          {/* Work Type */}
+          <div className="space-y-2">
+            <Label htmlFor="work-type">Work type</Label>
+            <Select
+              value={form.type}
+              onValueChange={(value) => setForm({ ...form, type: value as WorkType })}
+            >
+              <SelectTrigger id="work-type" className="w-full">
+                <div className="flex items-center gap-2">
+                  <span className={`h-2.5 w-2.5 rounded-full ${WORK_TYPE_COLORS[form.type].dot}`} />
+                  <SelectValue placeholder="Select type" />
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                {WORK_TYPES.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    <div className="flex items-center gap-2">
+                      <span className={`h-2.5 w-2.5 rounded-full ${WORK_TYPE_COLORS[type].dot}`} />
+                      {WORK_TYPE_COLORS[type].label}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Task Description */}

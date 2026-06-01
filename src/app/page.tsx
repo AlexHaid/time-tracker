@@ -126,6 +126,7 @@ export default function TimeTrackerPage() {
         name: data.name.trim(),
         description: data.description.trim(),
         date: data.date,
+        type: data.type,
         spentMinutes: minutes,
       });
     } else {
@@ -142,6 +143,7 @@ export default function TimeTrackerPage() {
             id: generateId(),
             name: data.name.trim(),
             description: data.description.trim(),
+            type: data.type,
             spentMinutes: minutes,
           },
         }));
@@ -154,6 +156,7 @@ export default function TimeTrackerPage() {
               id: generateId(),
               name: data.name.trim(),
               description: data.description.trim(),
+              type: data.type,
               spentMinutes: minutes,
             },
           },

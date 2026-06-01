@@ -1,7 +1,7 @@
-import { type TimeEntry, type EntriesByDate, type StorageData } from "./types";
+import { type TimeEntry, type EntriesByDate, type StorageData, DEFAULT_WORK_TYPE } from "./types";
 
 const STORAGE_KEY = "time-tracker-data";
-const CURRENT_VERSION = 2;
+const CURRENT_VERSION = 3;
 
 function getEmptyData(): StorageData {
   return {
@@ -11,19 +11,35 @@ function getEmptyData(): StorageData {
 }
 
 /**
- * Migrate v1 format (flat array) to v2 (grouped by date).
- * V1: { entries: TimeEntry[] & { date: string }, version: 1 }
- * V2: { entries: { "YYYY-MM-DD": TimeEntry[] }, version: 2 }
+ * Migrate v1 format (flat array) to v2+ (grouped by date).
  */
 function migrateV1toV2(data: Record<string, unknown>): StorageData {
-  const oldEntries = data.entries as Array<TimeEntry & { date: string }>;
+  const oldEntries = data.entries as Array<Record<string, unknown> & { date: string }>;
   const entries: EntriesByDate = {};
 
   for (const entry of oldEntries) {
     const dateKey = entry.date;
     const { date: _, ...entryWithoutDate } = entry;
+    const typedEntry = { ...entryWithoutDate, type: entryWithoutDate.type || DEFAULT_WORK_TYPE } as unknown as TimeEntry;
     if (!entries[dateKey]) entries[dateKey] = [];
-    entries[dateKey].push(entryWithoutDate);
+    entries[dateKey].push(typedEntry);
+  }
+
+  return { entries, version: CURRENT_VERSION };
+}
+
+/**
+ * Migrate v2 (entries grouped by date, no `type` field) to v3 (adds `type` field).
+ */
+function migrateV2toV3(data: Record<string, unknown>): StorageData {
+  const oldEntries = data.entries as Record<string, Array<Record<string, unknown>>>;
+  const entries: EntriesByDate = {};
+
+  for (const [date, list] of Object.entries(oldEntries)) {
+    entries[date] = list.map((entry) => ({
+      ...entry,
+      type: (entry.type as string) || DEFAULT_WORK_TYPE,
+    })) as TimeEntry[];
   }
 
   return { entries, version: CURRENT_VERSION };
@@ -43,7 +59,14 @@ export function loadData(): StorageData {
       return migrated;
     }
 
-    // V2+: entries is a date-keyed map
+    // V2 migration: entries grouped by date but missing `type` field
+    if (data.version === 2 && typeof data.entries === "object" && !Array.isArray(data.entries)) {
+      const migrated = migrateV2toV3(data);
+      saveData(migrated);
+      return migrated;
+    }
+
+    // V3+: entries is a date-keyed map with type field
     if (!data.entries || typeof data.entries !== "object" || Array.isArray(data.entries)) {
       return getEmptyData();
     }
@@ -98,7 +121,7 @@ export function addEntries(newEntries: Array<{ date: string; entry: TimeEntry }>
   saveData(data);
 }
 
-/** Update an entry by ID. Returns the old date so caller can handle date changes. */
+/** Update an entry by ID. */
 export function updateEntry(
   id: string,
   oldDate: string,
@@ -114,7 +137,6 @@ export function updateEntry(
     if (entryIndex === -1) return;
 
     const entry = { ...oldList[entryIndex] };
-    // Remove date from updates since it's the key, not a field on TimeEntry
     const { date: _, ...restUpdates } = updates;
     const updatedEntry = { ...entry, ...restUpdates };
 
@@ -165,7 +187,14 @@ export function importData(jsonString: string): boolean {
       return true;
     }
 
-    // V2+ validation: entries must be a date-keyed object
+    // Handle V2 import (date-keyed, no type field)
+    if (data.version === 2 && typeof data.entries === "object" && !Array.isArray(data.entries)) {
+      const migrated = migrateV2toV3(data);
+      saveData(migrated);
+      return true;
+    }
+
+    // V3+ validation: entries must be a date-keyed object
     if (!data.entries || typeof data.entries !== "object" || Array.isArray(data.entries)) {
       return false;
     }
@@ -173,7 +202,6 @@ export function importData(jsonString: string): boolean {
     const entries = data.entries as Record<string, unknown[]>;
     for (const [date, list] of Object.entries(entries)) {
       if (!Array.isArray(list)) return false;
-      // Validate date key format (basic check)
       if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return false;
       for (const entry of list) {
         const e = entry as Record<string, unknown>;
