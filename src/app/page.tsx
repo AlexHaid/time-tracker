@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { parseISO } from "date-fns";
 import { Clock, Timer } from "lucide-react";
 import CalendarGrid from "@/components/time-tracker/CalendarGrid";
@@ -16,18 +16,15 @@ function getTodayString(): string {
   return formatDate(new Date());
 }
 
-function loadInitialEntries(): EntriesByDate {
-  if (typeof window === "undefined") return {};
-  return getEntriesByDate();
-}
-
 export default function TimeTrackerPage() {
   // Current month displayed in calendar
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   // Selected date (YYYY-MM-DD) - initialize with today
   const [selectedDate, setSelectedDate] = useState<string>(getTodayString);
-  // All entries grouped by date (loaded from localStorage via lazy initializer)
-  const [entriesByDate, setEntriesByDate] = useState<EntriesByDate>(loadInitialEntries);
+  // All entries grouped by date — always init empty to match SSR, load after mount
+  const [entriesByDate, setEntriesByDate] = useState<EntriesByDate>({});
+  // Whether client-side data has been loaded
+  const [hydrated, setHydrated] = useState(false);
   // Task modal state
   const [taskModalOpen, setTaskModalOpen] = useState(false);
   const [taskModalDate, setTaskModalDate] = useState<string>("");
@@ -42,6 +39,12 @@ export default function TimeTrackerPage() {
   const refreshEntries = useCallback(() => {
     setEntriesByDate(getEntriesByDate());
   }, []);
+
+  // Load entries from localStorage after mount to avoid hydration mismatch
+  useEffect(() => {
+    refreshEntries();
+    setHydrated(true);
+  }, [refreshEntries]);
 
   // Get entries for the selected date
   const selectedDateEntries = useMemo(() => {
@@ -171,7 +174,7 @@ export default function TimeTrackerPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col bg-background" suppressHydrationWarning>
       {/* Header */}
       <header className="border-b bg-card">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between flex-wrap gap-3">
@@ -191,8 +194,8 @@ export default function TimeTrackerPage() {
             <div className="flex items-center gap-2 text-sm">
               <Clock className="h-4 w-4 text-muted-foreground" />
               <span className="text-muted-foreground">This month:</span>
-              <span className="font-semibold">
-                {formatTotal(monthTotalMinutes)}
+              <span className="font-semibold" suppressHydrationWarning>
+                {hydrated ? formatTotal(monthTotalMinutes) : "0m"}
               </span>
             </div>
             <ImportExportBar onDataChanged={refreshEntries} />
@@ -231,7 +234,7 @@ export default function TimeTrackerPage() {
       <footer className="border-t bg-card mt-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between text-xs text-muted-foreground">
           <span>Time Tracker &mdash; All data stored locally in your browser</span>
-          {selectedDate && selectedDateEntries.length > 0 && (
+          {hydrated && selectedDate && selectedDateEntries.length > 0 && (
             <span>
               Selected day total: <strong className="text-foreground">{formatTotal(selectedDateTotalMinutes)}</strong>
             </span>
