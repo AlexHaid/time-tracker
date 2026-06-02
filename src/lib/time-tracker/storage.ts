@@ -1,4 +1,5 @@
 import { type TimeEntry, type EntriesByDate, type StorageData, DEFAULT_WORK_TYPE } from "./types";
+import { formatMinutesCompact } from "./time-parser";
 
 const STORAGE_KEY = "time-tracker-data";
 const CURRENT_VERSION = 3;
@@ -123,9 +124,9 @@ export function addEntries(newEntries: Array<{ date: string; entry: TimeEntry }>
 
 /** Update an entry by ID. */
 export function updateEntry(
-  id: string,
-  oldDate: string,
-  updates: Partial<Omit<TimeEntry, "id">> & { date?: string }
+    id: string,
+    oldDate: string,
+    updates: Partial<Omit<TimeEntry, "id">> & { date?: string }
 ): void {
   const data = loadData();
   const newDate = updates.date || oldDate;
@@ -173,7 +174,21 @@ export function deleteEntry(date: string, id: string): void {
 
 export function exportData(): string {
   const data = loadData();
-  return JSON.stringify(data, null, 2);
+  // Inject readable `spentTime` field into each entry for easy reading.
+  // This field is not stored — it's computed on export only.
+  const enriched: Record<string, unknown> = {
+    ...data,
+    entries: Object.fromEntries(
+        Object.entries(data.entries).map(([date, list]) => [
+          date,
+          list.map((entry) => ({
+            ...entry,
+            spentTime: formatMinutesCompact(entry.spentMinutes),
+          })),
+        ])
+    ),
+  };
+  return JSON.stringify(enriched, null, 2);
 }
 
 export function importData(jsonString: string): boolean {
@@ -200,18 +215,23 @@ export function importData(jsonString: string): boolean {
     }
 
     const entries = data.entries as Record<string, unknown[]>;
+    const cleanEntries: EntriesByDate = {};
     for (const [date, list] of Object.entries(entries)) {
       if (!Array.isArray(list)) return false;
       if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return false;
+      cleanEntries[date] = [];
       for (const entry of list) {
         const e = entry as Record<string, unknown>;
         if (!e.id || !e.name || typeof e.spentMinutes !== "number") {
           return false;
         }
+        // Strip export-only fields (spentTime) — they're computed on export
+        const { spentTime: _, ...clean } = e;
+        cleanEntries[date].push(clean as unknown as TimeEntry);
       }
     }
 
-    saveData(data as unknown as StorageData);
+    saveData({ entries: cleanEntries, version: CURRENT_VERSION });
     return true;
   } catch {
     return false;

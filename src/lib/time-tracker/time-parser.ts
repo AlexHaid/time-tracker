@@ -61,6 +61,19 @@ export function formatMinutes(minutes: number): string {
 }
 
 /**
+ * Compact format for export — no space between hours and minutes.
+ * e.g. 90 -> "1h30m", 30 -> "30m", 60 -> "1h"
+ */
+export function formatMinutesCompact(minutes: number): string {
+  if (minutes <= 0) return "0m";
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  if (h === 0) return `${m}m`;
+  if (m === 0) return `${h}h`;
+  return `${h}h${m}m`;
+}
+
+/**
  * Check if a date is a weekend (Saturday or Sunday)
  */
 export function isWeekend(date: Date): boolean {
@@ -72,9 +85,9 @@ export function isWeekend(date: Date): boolean {
  * Get all dates in a range, optionally excluding weekends
  */
 export function getDatesInRange(
-  startDate: string,
-  endDate: string,
-  includeNonWorkingDays: boolean
+    startDate: string,
+    endDate: string,
+    includeNonWorkingDays: boolean
 ): string[] {
   const dates: string[] = [];
   const start = new Date(startDate + "T00:00:00");
